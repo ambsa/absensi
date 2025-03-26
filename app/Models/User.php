@@ -5,10 +5,11 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable 
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -21,6 +22,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',  // Tambahkan role_id
+        'departemen_id',  // Tambahkan departemen_id
     ];
 
     /**
@@ -42,4 +45,33 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+     // Relasi ke model Role
+     public function role(): BelongsTo
+     {
+         return $this->belongsTo(Role::class);
+     }
+ 
+     // Relasi ke model Departemen
+     public function departemen(): BelongsTo
+     {
+         return $this->belongsTo(Departemen::class);
+     }
+
+       // Relasi dengan tabel rfid_cards
+    public function rfidCard()
+    {
+        return $this->hasMany(RfidCard::class);
+    }
+ 
+     // Relasi ke model Attendance
+     public function attendances()
+     {
+         return $this->hasMany(Attendance::class);
+     }
+    
+     public function workSchedule()
+     {
+         return $this->hasMany(WorkSchedule::class);
+     }
 }
