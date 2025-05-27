@@ -9,13 +9,15 @@ class Departemen extends Model
     use HasFactory;
     protected $table = 'departemen';
 
-    // Relasi ke model User
-    
-    protected $fillable = ['name', 'description'];
+    protected $primaryKey = 'id_departemen';
 
     // Relasi ke model User
-    public function users()
+    
+    protected $fillable = ['nama_departemen'];
+
+    // Relasi ke model User
+    public function pegawai()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Pegawai::class, 'id_departemen', 'id_departemen');
     }
 }

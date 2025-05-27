@@ -3,82 +3,143 @@
 @section('title', 'User Dashboard')
 
 @section('content')
-<div class="container p-1">
-    <!-- Menampilkan Dashboard dan Profile -->
-    <div class="flex justify-between bg-white shadow-lg rounded-lg p-2 items-center mb-8">
-        <!-- Judul Dashboard -->
-        <h1 class="text-md font-semibold text-gray-800">
-            SISTEM INFORMASI MONITORING
-        </h1>
-
-        <!-- Profil di pojok kanan -->
-        <div class="flex items-center space-x-4 relative">
-            <!-- Profil Wrapper untuk background menyatu -->
-            <div class="flex items-center space-x-3 relative">
-                <!-- Gambar Profil -->
-                <img src="https://img.freepik.com/free-vector/businessman-character-avatar-isolated_24877-60111.jpg"
-                    alt="Profile Picture" class="w-10 h-10 rounded-full cursor-pointer" id="profileImage">
+<div class="container mx-auto bg-[#161A23]">
+    <!-- Grid Layout Utama -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-3">
+        <!-- Kolom Kiri: Kartu Statistik -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Total Pengajuan Cuti -->
+            <div class="bg-[#1E293B] p-5 rounded-xl shadow-md text-center space-y-4">
+                <div class="flex justify-left">
+                    <i class="fa-solid fa-calendar-days text-4xl text-gray-500"></i>
+                </div>
+                <div class="text-left">
+                    <h5 class="text-4xl font-bold text-white mb-5">{{ $totalCuti }}</h5>
+                    <h3 class="text-md font-semibold text-gray-400">Total Pengajuan Cuti</h3>   
+                </div>
             </div>
-
-            <!-- Dropdown Menu -->
-            <div id="dropdownMenu"
-                class="hidden absolute right-0 mt-40 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-10">
-                <ul>
-                    <!-- Profile Item -->
-                    <li class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-200">
-                        <i class="fa-regular fa-user mr-3"></i> Profile
-                    </li>
-
-                    <!-- Garis Pemisah -->
-                    <li class="border-t border-gray-200"></li>
-
-                    <!-- Settings Item -->
-                    <li class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-200">
-                        <i class="fas fa-cogs mr-3"></i> Settings
-                    </li>
-
-                    <!-- Garis Pemisah -->
-                    <li class="border-t border-gray-200"></li>
-
-                    <!-- Logout Form -->
-                    <li class="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-200">
-                        <form id="logoutForm" method="POST" action="{{ route('logout') }}" class="w-full">
-                            @csrf
-                            <button type="button" id="logoutButton" class="w-full text-left">
-                                <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+        
+            <!-- Pengajuan Cuti Pending -->
+            <div class="bg-[#1E293B] p-5 rounded-xl shadow-md text-center space-y-4">
+                <div class="flex justify-left">
+                    <i class="fa-solid fa-clock text-4xl text-yellow-500"></i>
+                </div>
+                <div class="text-left">
+                    <p class="text-4xl font-bold text-white mb-5">{{ $cutiPending }}</p>
+                    <h3 class="text-md font-semibold text-yellow-500">Menunggu Persetujuan</h3>
+                </div>
             </div>
+        
+            <!-- Pengajuan Cuti Approved -->
+            <div class="bg-[#1E293B] p-5 rounded-lg shadow-md text-center space-y-4">
+                <div class="flex justify-left">
+                    <i class="fa-solid fa-check-circle text-4xl text-green-500"></i>
+                </div>
+                <div class="text-left">
+                    <p class="text-4xl font-bold text-white mb-5">{{ $cutiApproved }}</p>                            
+                    <h3 class="text-md font-semibold text-green-500">Disetujui</h3>
+                </div>
+            </div>
+        
+            <!-- Pengajuan Cuti Rejected -->
+            <div class="bg-[#1E293B] p-5 rounded-lg shadow-md text-center space-y-4">
+                <div class="flex justify-left">
+                    <i class="fa-solid fa-times-circle text-4xl text-red-500"></i>
+                </div>
+                <div class="text-left">
+                    <p class="text-4xl font-bold text-white mb-5">{{ $cutiRejected }}</p>
+                    <h3 class="text-md font-semibold text-red-500">Ditolak</h3>
+                </div>
+            </div>
+        </div>
+        <div class="bg-[#161A23] border border-gray-700 shadow-lg rounded-lg text-white p-6">
+            <!-- Judul Form -->
+            <h2 class="text-xl font-bold mb-6 text-center text-gray-200">Form Absensi</h2>
 
-
+            <!-- Form Input Catatan dan File -->
+            <form action="{{ route('user.data_absen.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+            
+                <!-- Input Catatan -->
+                <div>
+                    <label for="catatan" class="block text-sm font-medium text-gray-200">Catatan Harian</label>
+                    <textarea 
+                        id="catatan" 
+                        name="catatan" 
+                        rows="4" 
+                        class="mt-1 block w-full rounded-md border-gray-600 bg-[#2A303C] text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm {{ session('catatanSudahDiisi') ? 'cursor-not-allowed' : '' }}" 
+                        placeholder="Tulis catatan harian Anda..."
+                        {{ session('catatanSudahDiisi') ? 'disabled' : '' }}
+                    ></textarea>
+                </div>
+            
+                <!-- Input File Catatan -->
+                <div>
+                    <label for="file_catatan" class="block text-sm font-medium text-gray-200">Unggah File Catatan</label>
+                    <input 
+                        type="file" 
+                        id="file_catatan" 
+                        name="file_catatan" 
+                        class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 {{ session('catatanSudahDiisi') ? 'cursor-not-allowed' : '' }}"
+                        {{ session('catatanSudahDiisi') ? 'disabled' : '' }}
+                    >
+                </div>
+            
+                <!-- Tombol Submit -->
+                <div class="flex justify-center">
+                    <button 
+                        type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        {{ session('catatanSudahDiisi') ? 'disabled' : '' }}
+                    >
+                        Simpan Catatan
+                    </button>
+                </div>
+            </form>
+            
+            <!-- SweetAlert -->
+            <script>
+                // Cek jika ada pesan sukses
+                @if (session('success'))
+                    Swal.fire({
+                        position: 'center',
+                        icon: 'success',
+                        title: '{{ session("success") }}',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        background: '#161A23',
+                        color: '#ffffff',
+                        toast: true,
+                        width: '250px',
+                        padding: '1rem',
+                        customClass: {
+                            popup: 'swal2-noanimation',
+                        },
+                    });
+                @endif
+            
+                // Cek jika ada pesan error
+                @if (session('error'))
+                    Swal.fire({
+                        position: 'center',
+                        icon: 'error',
+                        title: '{{ session("error") }}',
+                        showConfirmButton: true,
+                        background: '#161A23',
+                        color: '#ffffff',
+                        toast: true,
+                        width: '250px',
+                        padding: '1rem',
+                        customClass: {
+                            popup: 'swal2-noanimation',
+                        },
+                    });
+                @endif
+            </script>
         </div>
     </div>
 </div>
 
 
-<div class="container mx-auto p-6 bg-white shadow-lg rounded-lg">
-    <!-- Menentukan waktu saat ini -->
-    @php
-        $hour = now()->format('H'); // Mengambil jam saat ini dengan Laravel (dengan zona waktu yang disesuaikan)
-        $greeting = '';
-
-        // Menentukan ucapan berdasarkan jam
-        if ($hour >= 0 && $hour < 12) {
-            $greeting = 'Selamat Pagi';
-        } elseif ($hour >= 12 && $hour < 15) {
-            $greeting = 'Selamat Siang';
-        } elseif ($hour >= 15 && $hour < 18) {
-            $greeting = 'Selamat Sore';
-        } else {
-            $greeting = 'Selamat Malam';
-        }
-    @endphp
-
-    <!-- Menampilkan ucapan dan nama pengguna -->
-    <h1 class="text-4xl font-semibold text-gray-800 mb-4">{{ $greeting }}, {{ Auth::user()->name }}!</h1>
-
-    <p class="mt-4 text-gray-600">This is the content of the user dashboard.</p>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2 @11"></script>
 @endsection

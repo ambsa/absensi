@@ -9,9 +9,18 @@ class Role extends Model
 {
     use HasFactory;
 
-    // Relasi ke model User
-    public function users()
+    protected $primaryKey = 'id_role';
+    
+    protected $table = 'role';
+
+    protected $fillable = [
+        'name',
+    ];
+
+
+    public function pegawai()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Pegawai::class, 'id_role', 'id_role');
     }
+    
 }

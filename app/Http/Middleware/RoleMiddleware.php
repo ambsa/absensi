@@ -13,13 +13,19 @@ class RoleMiddleware
      * Handle an incoming request.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  string  $role
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle($request, Closure $next, ...$role)
     {
-        if (Auth::check() && Auth::user()->role->name == $role) {
-            return $next($request);
+        if (!Auth::check()) {
+            return redirect('/login'); // Redirect ke halaman login jika pengguna belum login
         }
 
-        return redirect('/login');  // Redirect jika role tidak sesuai
+        $pegawai = Auth::user();
+        if (!$pegawai->role || !in_array($pegawai->role->name, $role)) {
+            abort(403, 'Unauthorized action.'); // Kembalikan error 403 jika role tidak sesuai
+        }
+
+        return $next($request); // Lanjutkan request jika role sesuai
     }
 }
