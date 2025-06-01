@@ -55,7 +55,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Data Absen
     Route::get('/admin/data_absen', [DatasenController::class, 'index'])->name('admin.data_absen.index');
     Route::post('/admin/data_absen/store', [DatasenController::class, 'store'])->name('admin.data_absen.store');
- 
+    Route::get('/admin/data_absen/catatan', [DatasenController::class, 'catatan'])->name('admin.data_absen.catatan');
     // Route untuk preview PDF
     Route::get('/admin/data_absen/preview-pdf/{id}', [DatasenController::class, 'downloadPDF'])
         ->name('admin.data_absen.preview-pdf');
