@@ -9,6 +9,9 @@ use App\Models\Datasen;
 
 class DatasenController extends Controller
 {
+    public function catatanuser(){
+        return view('user.catatan.catatanuser');
+    }
     public function store(Request $request)
     {
         // Validasi input

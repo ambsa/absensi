@@ -4,6 +4,7 @@
 @section('title', 'Catatan Harian')
 
 @section('content')
+
 <div class="flex items-center justify-center bg-[#161A23] px-4">
     <div class="w-full max-w-2xl bg-[#1E293B] p-6 rounded-lg shadow-md text-white">
         <h1 class="text-xl font-bold mb-6 text-center">Catatan Harian</h1>

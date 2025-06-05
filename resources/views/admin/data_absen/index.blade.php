@@ -6,9 +6,10 @@
 
 
     <!-- Wrapper Responsif -->
-    <div class="shadow-md overflow-x-auto rounded-lg">
-        <table class="min-w-max w-full bg-[#161A23] rounded-lg">
-            <thead>
+    <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-lg">
+            <table class="min-w-full w-full bg-[#161A23] border border-gray-700">
+                <thead>
                 <tr class="bg-gray-800 text-sm md:text-base">
                     <th class="py-3 px-2 md:px-4 border-b border-gray-700 text-center text-white">ID Absen</th>
                     <th class="py-3 px-2 md:px-4 border-b border-gray-700 text-center text-white">ID Pegawai</th>
@@ -21,13 +22,13 @@
             </thead>
             <tbody>
                 @forelse ($datasens as $datasen)
-                    <tr class="{{ $loop->even ? 'bg-gray-900 text-center' : 'bg-[#161A23] text-center' }}">
+                    <tr class="{{ $loop->even ? 'bg-gray-900' : 'bg-[#161A23]' }} text-center">
                         <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->id_absen }}</td>
                         <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">
-                            {{ $datasen->pegawai->id_pegawai ?? '-' }}</td>
-                        <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->jam_masuk }}</td>
-                        <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->jam_pulang }}
+                            {{ $datasen->pegawai->id_pegawai ?? '-' }}
                         </td>
+                        <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->jam_masuk }}</td>
+                        <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->jam_pulang }}</td>
                         <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">{{ $datasen->catatan }}</td>
                         <td class="py-3 px-2 md:px-4 border-b border-gray-700 text-white">
                             @if ($datasen->file_catatan)
@@ -66,7 +67,8 @@
                 @empty
                     <tr>
                         <td colspan="7" class="py-3 px-2 md:px-4 border-b border-gray-700 text-center text-white">
-                            Tidak ada data absen.</td>
+                            Tidak ada data absen.
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

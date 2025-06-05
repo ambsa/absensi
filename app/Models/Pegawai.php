@@ -57,6 +57,10 @@ class Pegawai extends Authenticatable
 {
     return $this->hasMany(Cuti::class, 'id_pegawai');
 }
+public function Wfh()
+    {
+        return $this->hasMany(Wfh::class, 'id_pegawai', 'id_pegawai');
+    }
     
     // Relasi ke model Attendance
     // public function attendances()

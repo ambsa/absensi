@@ -29,34 +29,34 @@
             <!-- Login Form -->
             <form method="POST" action="{{ route('login') }}">
                 @csrf
-
-                <!-- name input -->
+            
+                <!-- Email input -->
                 <div class="mb-6 relative">
                     <!-- Label untuk grup -->
-                    <label for="nama_pegawai" class="block text-gray-300 text-sm font-bold mb-2">Name</label>
+                    <label for="email" class="block text-gray-300 text-sm font-bold mb-2">Email</label>
                     <div class="relative">
                         <!-- Icon -->
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fa-solid fa-address-card text-gray-400"></i>
+                            <i class="fa-solid fa-envelope text-gray-400"></i>
                         </span>
-
+            
                         <!-- Input Field -->
-                        <input id="nama_pegawai" type="text"
+                        <input id="email" type="email"
                             class="peer shadow appearance-none border rounded-lg w-full py-2 px-10 text-black leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            name="nama_pegawai" value="{{ old('nama_pegawai') }}" required autocomplete="username"
+                            name="email" value="{{ old('email') }}" required autocomplete="email"
                             autofocus />
-
+            
                         <!-- Floating Label -->
-                        <label for="nama_pegawai"
+                        <label for="email"
                             class="absolute left-10 top-2 text-gray-400 text-sm pointer-events-none transition-all duration-300 peer-focus:left-10 peer-focus:text-xs peer-valid:opacity-0">
-                            Enter Your Name
+                            Enter Your Email
                         </label>
                     </div>
-                    @error('nama_pegawai')
+                    @error('email')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
-
+            
                 <!-- Password input -->
                 <div class="mb-6 relative">
                     <!-- Label untuk grup -->
@@ -66,18 +66,18 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <i class="fa-solid fa-lock text-gray-400"></i>
                         </span>
-                
+                    
                         <!-- Input Field -->
                         <input id="password" type="password"
                             class="peer shadow appearance-none border rounded-lg w-full py-2 px-10 pr-10 text-black leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
                             name="password" required autocomplete="current-password" />
-                
+                    
                         <!-- Floating Label -->
                         <label for="password"
                             class="absolute left-10 top-2 text-gray-400 text-sm pointer-events-none transition-all duration-300 peer-focus:left-10 peer-focus:text-xs peer-valid:opacity-0">
                             Enter your password
                         </label>
-                
+                    
                         <!-- Toggle Password Visibility Button -->
                         <button type="button"
                             class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-400 hover:text-gray-600"
@@ -89,7 +89,7 @@
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
-
+            
                 <!-- Remember Me -->
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
@@ -99,7 +99,7 @@
                     </div>
                     <a href="#" class="text-sm text-blue-400 hover:underline">Forgot Password?</a>
                 </div>
-
+            
                 <!-- Login Button -->
                 <div class="flex justify-center">
                     <button type="submit"

@@ -12,17 +12,17 @@
 </div>    --}}
 
 
-   @include('dashboard.pengajuancuti')
+   @include('dashboard_adm.pengajuancuti')
 
     <div class="container mx-auto mt-8 px-4">
         <!-- Grid Layout -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             <!-- Bagian Diagram -->
-            @include('dashboard.statistik')
+            @include('dashboard_adm.statistik')
 
             <!-- Bagian Tabel Catatan -->
-            @include('dashboard.tabelpegawai')
+            @include('dashboard_adm.tabelpegawai')
            
         </div>
     </div>
@@ -35,7 +35,7 @@
         <!-- Grid Layout -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            @include('dashboard.sotm')
+            @include('dashboard_adm.sotm')
 
 
 

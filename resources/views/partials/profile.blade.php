@@ -1,40 +1,52 @@
-<!-- Profil di pojok kanan -->
-<div class="flex items-center space-x-2 sm:space-x-4 relative">
-    <!-- Gambar Profil -->
-    <img src="https://img.freepik.com/free-vector/user-circles-set_78370-4691.jpg " alt="Profile"
-        class="w-8 h-8 sm:w-10 sm:h-10 rounded-full cursor-pointer transition-transform duration-200 hover:scale-105"
-        id="profileImage">
+<div class="relative ml-auto flex items-center space-x-4">
+    
+
+    <div class="flex items-center space-x-2 hover:bg-gray-700 rounded-md transition duration-200 px-2 py-1">
+        <!-- Avatar Profil -->
+        <img src="{{ Auth::user()->pegawai->foto_profil ?? 'https://img.freepik.com/free-vector/user-circles-set_78370-4691.jpg'  }}"
+            alt="Profile"
+            class="w-8 h-8 sm:w-10 sm:h-10 rounded-full cursor-pointer object-cover border border-gray-600"
+            id="profileImageToggle">
+    
+        <!-- Nama User -->
+        <span class=" sm:inline-block text-sm font-medium text-gray-300">
+            {{ Auth::user()->nama_pegawai }}
+        </span>
+    </div>
 
     <!-- Dropdown Menu -->
     <div id="profileDropdownMenu"
-        class="absolute right-0 top-12 mt-2 w-32 sm:w-48 bg-[#161A23] shadow-lg rounded-lg border border-gray-700 z-10 
-               opacity-0 invisible transform scale-95 transition-all duration-300 ease-in-out">
-        <ul class="text-xs sm:text-sm">
-            <!-- Profile Item -->
-            <li class="flex items-center px-3 py-2 text-gray-300 hover:bg-gray-700 cursor-pointer">
-                <i class="fa-regular fa-user mr-2 sm:mr-3"></i> Profile
+        class="absolute right-0 top-12 mt-2 w-32 sm:w-48 bg-[#1E293B] shadow-lg rounded-lg border border-gray-700 z-10 
+               opacity-0 invisible transform scale-95 transition-all duration-300 ease-in-out origin-top-right">
+        <ul class="py-2 text-xs sm:text-sm">
+            <!-- Profile -->
+            <li>
+                <a href="#"
+                    class="flex items-center px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white w-full transition duration-150">
+                    <i class="fa-regular fa-user mr-2 sm:mr-3"></i> Profile
+                </a>
             </li>
-
-            <!-- Garis Pemisah -->
-            <li class="border-t border-gray-700"></li>
-
-            <!-- Settings Item -->
-            <li class="flex items-center px-3 py-2 text-gray-300 hover:bg-gray-700 cursor-pointer">
-                <i class="fas fa-cogs mr-2 sm:mr-3"></i> Settings
+            <li class="border-t border-gray-700 my-1"></li>
+            <!-- Settings -->
+            <li>
+                <a href="#" class="flex items-center px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white w-full transition duration-150">
+                    <i class="fas fa-cogs mr-2 sm:mr-3"></i> Settings
+                </a>
             </li>
-
-            <!-- Garis Pemisah -->
-            <li class="border-t border-gray-700"></li>
-
-            <!-- Logout Form -->
-            <li class="px-3 py-2 text-gray-300 hover:bg-gray-700 cursor-pointer">
-                <form method="POST" action="{{ route('logout') }}" class="w-full">
-                    @csrf
-                    <button type="submit" class="w-full text-left flex items-center">
-                        <i class="fa-solid fa-arrow-right-from-bracket mr-2 sm:mr-3"></i> Logout
-                    </button>
-                </form>
+            <li class="border-t border-gray-700 my-1"></li>
+            <!-- Logout -->
+            <li>
+                <button type="button"
+                    onclick="confirmLogout()"
+                    class="flex items-center w-full px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition duration-150 cursor-pointer">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-2 sm:mr-3"></i> Logout
+                </button>
             </li>
+            
+            <!-- Form Logout -->
+            <form id="logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
+                @csrf
+            </form>
         </ul>
     </div>
 </div>

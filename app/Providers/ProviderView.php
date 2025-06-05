@@ -36,11 +36,27 @@ class ProviderView extends ServiceProvider
     
             // Set page title berdasarkan route name
             $pageTitle = match ($routeName) {
-                'admin.index' => 'Dashboard',
-                'admin.pegawai.index' => 'Daftar Pegawai',
-                'admin.pegawai.create' => 'Tambah Pegawai',
-                'admin.pegawai.edit' => 'Edit Pegawai',
-                'admin.data_absen.index' => 'Data Absen Karyawan',
+                'admin.index' => 'Dashboard ',
+            'admin.pegawai.index' => 'Daftar Pegawai',
+            'admin.pegawai.create' => 'Tambah Pegawai',
+            'admin.pegawai.edit' => 'Edit Pegawai',
+            'admin.pegawai.show' => 'Detail Pegawai',
+            'admin.data_absen.index' => 'Data Absensi',
+            'admin.data_absen.catatan' => 'Catatan Harian',
+            'admin.data_absen.preview-pdf' => 'Preview PDF Absensi',
+            'admin.data_absen.download-pdf' => 'Download PDF Absensi',
+            'admin.data_absen.download-csv' => 'Download CSV Absensi',
+            'admin.cuti.index' => 'Pengajuan Cuti',
+            'admin.cuti.create' => 'Buat Pengajuan Cuti',
+            'admin.cuti.store' => 'Simpan Pengajuan Cuti',
+            'admin.cuti.update_status' => 'Ubah Status Cuti',
+            'admin.cuti.destroy' => 'Hapus Pengajuan Cuti',
+            'user.index' => 'Dashboard ',
+            'user.cuti.index' => 'Riwayat Cuti Saya',
+            'user.cuti.create' => 'Ajukan Cuti Baru',
+            'user.cuti.store' => 'Simpan Pengajuan Cuti',
+            'user.catatan.catatanuser' => 'Catatan Harian',
+            'user.catatan.store' => 'Simpan Catatan Harian',
                 default => 'SISTEM INFORMASI MONITORING',
             };
     

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\DatasenController;
 use App\Http\Controllers\Admin\PegawaiController;
+use App\Http\Controllers\Admin\WfhController;
 
 use App\Http\Controllers\User\UserCutiController;
 use App\Http\Controllers\User\UserController;
@@ -85,6 +86,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Hapus data cuti
     Route::delete('/admin/cuti/{id}', [CutiController::class, 'destroy'])->name('admin.cuti.destroy');
 });
+Route::get('/admin/wfh', [WfhController::class, 'index'])->name('admin.wfh.index');
+Route::get('/admin/wfh/create', [WfhController::class, 'create'])->name('admin.wfh.create');
+Route::post('admin/wfh/store', [WfhController::class, 'store'])->name('admin.wfh.store');
 
 // SISI USER
 Route::middleware(['auth', 'role:user'])->group(function () {
@@ -98,7 +102,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('user/cuti/store', [UserCutiController::class, 'store'])->name('user.cuti.store');
 });
 
-Route::post('/user/data_absen/store', [UserDatasenController::class, 'store'])->name('user.data_absen.store');
+Route::get('/user/catatan/catatanuser', [UserDatasenController::class, 'catatanuser'])->name('user.catatan.catatanuser');
+Route::post('/user/catatan/store', [UserDatasenController::class, 'store'])->name('user.catatan.store');
 
 // Route untuk halaman scan RFID bagi pengguna dengan role 'tap_rfid'
 // Route::middleware(['auth', 'role:tap_rfid'])->group(function () {
