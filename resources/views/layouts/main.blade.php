@@ -80,7 +80,7 @@
 
         <!-- Footer -->
         <footer
-            class="px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center text-sm text-gray-500 border-t border-gray-700 space-x-4">
+            class="px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center text-sm text-gray-500 space-x-4">
             <span>&copy; {{ now()->year }} - by Me</span>
             {{-- <a href="#" class="hover:text-white transition">Absensi Dashboard</a>
         <span>|</span>

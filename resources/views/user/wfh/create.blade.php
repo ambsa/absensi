@@ -1,10 +1,12 @@
 @extends('layouts.main')
 
-@section('title', 'Ajukan WFH')
+@section('title', 'Pengajuan WFH Saya')
 
 @section('content')
+
 <div class="container mx-auto px-4 py-8">
-    <form action="{{ route('admin.wfh.store') }}" method="POST" class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+
+    <form action="{{ route('user.wfh.store') }}" method="POST" class="max-w-md mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
         @csrf
 
         <!-- Nama Pegawai -->
@@ -27,14 +29,10 @@
             <button type="submit" class="bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hover:bg-indigo-800">
                 Ajukan
             </button>
-            <a href="{{ route('admin.wfh.index') }}" class="bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hover:bg-red-700">
+            <a href="{{ route('user.wfh.index') }}" class="bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hover:bg-red-700">
                 Cancel
             </a>
         </div>
     </form>
 </div>
-@endsection
-
-@section('scripts')
-<script src="https://kit.fontawesome.com/a076d05399.js"  crossorigin="anonymous"></script>
 @endsection

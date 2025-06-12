@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Datasen;
+use App\Models\Wfh;
 use App\Models\DataAbsen;
 
 use Illuminate\Http\Request;
@@ -156,6 +157,69 @@ class DatasenController extends Controller
             // Preview PDF di browser
             return $pdf->stream('data_absen_' . $absen->id_absen . '.pdf');
         }
+    }
+
+    public function wfhAbsen(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'wfh_id' => 'required|exists:wfhs,id_wfh',
+            'type' => 'required|in:masuk,pulang',
+        ]);
+
+        // Ambil data WFH
+        $wfh = Wfh::findOrFail($request->wfh_id);
+
+        // Pastikan absen hanya bisa dilakukan pada tanggal yang sesuai
+        if ($wfh->tanggal !== now()->toDateString()) {
+            return response()->json(['status' => 'error', 'message' => 'Tidak dapat melakukan absen di luar tanggal WFH/WFA.'], 403);
+        }
+
+        // Ambil ID pegawai dari user yang login
+        $idPegawai = Auth::user()->id_pegawai;
+
+        // Cari record absen hari ini berdasarkan id_pegawai
+        $today = now()->toDateString();
+        $absen = Datasen::where('id_pegawai', $idPegawai)
+            ->whereDate('created_at', $today)
+            ->first();
+
+        // Jika belum ada record absen untuk hari ini, buat record baru
+        if (!$absen) {
+            $absen = new Datasen();
+            $absen->id_pegawai = $idPegawai;
+            $absen->created_at = now();
+            $absen->updated_at = now();
+        }
+
+        $response = ['status' => 'success', 'message' => 'Absen berhasil dilakukan.'];
+        $statusCode = 200;
+
+        // Update jam masuk/pulang berdasarkan jenis absen
+        if ($request->type === 'masuk') {
+            if ($absen->jam_masuk) {
+                $response = ['status' => 'error', 'message' => 'Anda sudah absen masuk hari ini.'];
+                $statusCode = 403;
+            } else {
+                $absen->jam_masuk = now();
+            }
+        } elseif ($request->type === 'pulang') {
+            if (!$absen->jam_masuk) {
+                $response = ['status' => 'error', 'message' => 'Anda belum absen masuk hari ini.'];
+                $statusCode = 403;
+            } elseif ($absen->jam_pulang) {
+                $response = ['status' => 'error', 'message' => 'Anda sudah absen pulang hari ini.'];
+                $statusCode = 403;
+            } else {
+                $absen->jam_pulang = now();
+            }
+        }
+
+        if ($statusCode === 200) {
+            $absen->save();
+        }
+
+        return response()->json($response, $statusCode);
     }
 
 

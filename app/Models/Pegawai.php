@@ -54,23 +54,11 @@ class Pegawai extends Authenticatable
     }
 
     public function cuti()
-{
-    return $this->hasMany(Cuti::class, 'id_pegawai');
-}
-public function Wfh()
+    {
+        return $this->hasMany(Cuti::class, 'id_pegawai');
+    }
+    public function Wfh()
     {
         return $this->hasMany(Wfh::class, 'id_pegawai', 'id_pegawai');
     }
-    
-    // Relasi ke model Attendance
-    // public function attendances()
-    // {
-    //     return $this->hasMany(Attendance::class);
-    // }
-
-    // Relasi ke model WorkSchedule
-    // public function workSchedule()
-    // {
-    //     return $this->hasMany(WorkSchedule::class);
-    // }
 }

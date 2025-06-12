@@ -108,6 +108,37 @@
                 </div>
             </li>
 
+            <!-- Data Absensi -->
+            <li class="text-gray-500 p-1 font-semibold transition duration-200 relative">
+                <!-- Tombol Induk -->
+                <div id="toggleAbsenMenu"
+                    class="w-11/12 mx-auto py-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-600">
+                    <div class="flex items-center justify-between px-4 py-2 font-semibold text-gray-500">
+                        <span class="flex items-center">
+                            <i class="fa-solid fa-box-archive mr-3"></i> Absensi
+                        </span>
+                        <i id="absenArrow" class="fas fa-chevron-down text-sm transition-transform duration-200"></i>
+                    </div>
+                </div>
+            
+                <!-- Dropdown Content -->
+                <div id="absenDropdownContent" class="mt-1 space-y-2 px-2 {{ Request::is('user.catatan.catatanuser*') ? '' : 'hidden' }}">
+                    <!-- Isi Catatan -->
+                    <a href="{{ route('user.catatan.catatanuser') }}"
+                        class="block py-2 px-6 text-sm rounded-md transition duration-200 
+                        @if (Route::currentRouteName() == 'user.catatan.catatanuser') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-list mr-2"></i> Isi Catatan
+                    </a>
+            
+                    <!-- WFH -->
+                    <a href="{{ route('user.wfh.index') }}"
+                        class="block py-2 px-6 text-sm rounded-md transition duration-200 
+                        @if (Route::currentRouteName() == 'user.wfh.index') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-house-laptop"></i></i> WFH
+                    </a>
+                </div>
+            </li>
+
             <!-- Cuti -->
             <li class="text-gray-500 p-1 font-semibold transition duration-200">
                 <div class="w-11/12 mx-auto py-1 {{ Request::is('user/cuti') ? 'bg-gray-600 rounded-lg' : 'hover:bg-gray-600 rounded-lg' }}">
@@ -120,17 +151,6 @@
                 </div>
             </li>
 
-            <!-- Catatan Harian -->
-            <li class="text-gray-500 p-1 font-semibold transition duration-200">
-                <div class="w-11/12 mx-auto py-1 {{ Request::is('user/catatan/catatanuser') ? 'bg-gray-600 rounded-lg' : 'hover:bg-gray-600 rounded-lg'}}">
-                    <a href="{{ route('user.catatan.catatanuser') }}"
-                        class="flex items-center py-2 px-4 font-semibold 
-                              {{ Request::is('user/catatan/catatanuser') ? 'text-gray-300' : 'text-gray-500 hover:text-gray-300' }} 
-                              transition duration-200 w-full">
-                        <i class="fa-regular fa-pen-to-square mr-3"></i> Catatan
-                    </a>
-                </div>
-            </li>
         @endif
 
         <!-- Logout -->

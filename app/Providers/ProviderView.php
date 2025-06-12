@@ -36,7 +36,7 @@ class ProviderView extends ServiceProvider
     
             // Set page title berdasarkan route name
             $pageTitle = match ($routeName) {
-                'admin.index' => 'Dashboard ',
+            'admin.index' => 'Dashboard ',
             'admin.pegawai.index' => 'Daftar Pegawai',
             'admin.pegawai.create' => 'Tambah Pegawai',
             'admin.pegawai.edit' => 'Edit Pegawai',
@@ -51,6 +51,8 @@ class ProviderView extends ServiceProvider
             'admin.cuti.store' => 'Simpan Pengajuan Cuti',
             'admin.cuti.update_status' => 'Ubah Status Cuti',
             'admin.cuti.destroy' => 'Hapus Pengajuan Cuti',
+            'admin.wfh.index' => 'Work From Home',
+            'admin.wfh.create' => 'Ajukan Cuti',
             'user.index' => 'Dashboard ',
             'user.cuti.index' => 'Riwayat Cuti Saya',
             'user.cuti.create' => 'Ajukan Cuti Baru',

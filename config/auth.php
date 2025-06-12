@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\App;
+
 return [
 
     /*
@@ -36,11 +38,15 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'pegawais',
-        ],
+    'web' => [ // Guard untuk user (pegawai dengan role 'user')
+        'driver' => 'session',
+        'provider' => 'pegawais',
     ],
+    'admin' => [ // Guard baru untuk admin (pegawai dengan role 'admin')
+        'driver' => 'session',
+        'provider' => 'pegawais',
+    ],
+],
 
     /*
     |--------------------------------------------------------------------------
@@ -60,16 +66,15 @@ return [
     */
 
     'providers' => [
-        'pegawais' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Pegawai::class,
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+    'pegawais' => [ // Provider untuk pegawai (termasuk admin dan user)
+        'driver' => 'eloquent',
+        'model' => \App\Models\Pegawai::class,
     ],
+    'roles' => [ // Provider untuk role (opsional, jika diperlukan)
+        'driver' => 'eloquent',
+        'model' => \App\Models\Role::class,
+    ],
+],
 
     /*
     |--------------------------------------------------------------------------

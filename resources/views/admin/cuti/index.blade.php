@@ -16,7 +16,7 @@
 
         <!-- Tabel Cuti -->
         <div class="rounded-xl shadow-md">
-            <table class="w-full bg-[#1E293B] divide-y divide-gray-700">
+            <table class="w-full bg-[#1E293B] divide-y divide-gray-700 rounded-xl overflow-hidden">
                 <thead class="bg-gray-800 sticky top-0 z-10">
                     <tr>
                         <th
