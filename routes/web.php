@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\DatasenController;
 use App\Http\Controllers\Admin\PegawaiController;
 use App\Http\Controllers\Admin\WfhController;
+use App\Http\Controllers\Admin\DeviceTokenController;
 
 use App\Http\Controllers\User\UserCutiController;
 use App\Http\Controllers\User\UserController;
@@ -64,6 +65,8 @@ Route::middleware(['auth:admin', 'check.admin'])->group(function () {
         ->defaults('mode', 'download') // Set mode default ke 'download'
         ->name('admin.data_absen.download-pdf');
     Route::get('/admin/data_absen/download-csv/{id}', [DatasenController::class, 'downloadCSV'])->name('admin.data_absen.download-csv');
+    Route::get('/admin/data-absen/download-all-pdf', [DatasenController::class, 'downloadAllPDF'])->name('admin.data_absen.download-all-pdf');
+    Route::get('/admin/data-absen/download-all-excel', [DatasenController::class, 'downloadAllExcel'])->name('admin.data_absen.download-all-excel');
 
     // Data Cuti
     Route::get('/admin/cuti', [CutiController::class, 'index'])->name('admin.cuti.index');
@@ -79,6 +82,10 @@ Route::middleware(['auth:admin', 'check.admin'])->group(function () {
     Route::get('admin/wfh/{id}/show', [WfhController::class, 'show'])->name('admin.wfh.show'); // Menampilkan detail pengajuan WFH
     Route::put('admin/wfh/{id}/update', [WfhController::class, 'update'])->name('admin.wfh.update'); // Memperbarui pengajuan WFH
     Route::delete('admin/wfh/{id}/destroy', [WfhController::class, 'destroy'])->name('admin.wfh.destroy'); // Menghapus pengajuan WFH
+
+    Route::post('/store-device-token', [DeviceTokenController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/admin/wfh/{id}/absen-masuk', [WfhController::class, 'absenMasuk'])->name('admin.wfh.absen.masuk');
+    Route::post('/admin/wfh/{id}/absen-pulang', [WfhController::class, 'absenPulang'])->name('admin.wfh.absen.pulang');
 });
 
 // USER

@@ -36,7 +36,7 @@
             <li class="border-t border-gray-700 my-1"></li>
             <!-- Logout -->
             <li>
-                <button type="button"
+                <button type="button" id="logoutButton"
                     onclick="confirmLogout()"
                     class="flex items-center w-full px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition duration-150 cursor-pointer">
                     <i class="fa-solid fa-arrow-right-from-bracket mr-2 sm:mr-3"></i> Logout

@@ -59,7 +59,8 @@
                 </div>
             
                 <!-- Dropdown Content -->
-                <div id="absenDropdownContent" class="mt-1 space-y-2 px-2 {{ Request::is('admin/data_absen*') ? '' : 'hidden' }}">
+                <div id="absenDropdownContent"
+                    class="mt-1 space-y-2 px-2 overflow-hidden transition-all duration-300 ease-in-out max-h-0">
                     <!-- Riwayat Absensi -->
                     <a href="{{ route('admin.data_absen.index') }}"
                         class="block py-2 px-6 text-sm rounded-md transition duration-200 
@@ -73,12 +74,12 @@
                         @if (Route::currentRouteName() == 'admin.data_absen.catatan') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
                         <i class="fa-solid fa-pen-to-square mr-2"></i> Isi Catatan
                     </a>
-
-                    <!-- Isi Catatan -->
+            
+                    <!-- WFH -->
                     <a href="{{ route('admin.wfh.index') }}"
                         class="block py-2 px-6 text-sm rounded-md transition duration-200 
                         @if (Route::currentRouteName() == 'admin.wfh.index') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
-                        <i class="fa-solid fa-house-laptop"></i></i> WFH
+                        <i class="fa-solid fa-house-laptop"></i> WFH
                     </a>
                 </div>
             </li>
@@ -108,8 +109,8 @@
                 </div>
             </li>
 
-            <!-- Data Absensi -->
-            <li class="text-gray-500 p-1 font-semibold transition duration-200 relative">
+             <!-- Data Absensi -->
+             <li class="text-gray-500 p-1 font-semibold transition duration-200 relative">
                 <!-- Tombol Induk -->
                 <div id="toggleAbsenMenu"
                     class="w-11/12 mx-auto py-1 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-600">
@@ -122,19 +123,21 @@
                 </div>
             
                 <!-- Dropdown Content -->
-                <div id="absenDropdownContent" class="mt-1 space-y-2 px-2 {{ Request::is('user.catatan.catatanuser*') ? '' : 'hidden' }}">
+                <div id="absenDropdownContent"
+                    class="mt-1 space-y-2 px-2 overflow-hidden transition-all duration-300 ease-in-out max-h-0">
+                               
                     <!-- Isi Catatan -->
                     <a href="{{ route('user.catatan.catatanuser') }}"
                         class="block py-2 px-6 text-sm rounded-md transition duration-200 
                         @if (Route::currentRouteName() == 'user.catatan.catatanuser') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
-                        <i class="fa-solid fa-list mr-2"></i> Isi Catatan
+                        <i class="fa-solid fa-pen-to-square mr-2"></i> Isi Catatan
                     </a>
             
                     <!-- WFH -->
                     <a href="{{ route('user.wfh.index') }}"
                         class="block py-2 px-6 text-sm rounded-md transition duration-200 
                         @if (Route::currentRouteName() == 'user.wfh.index') bg-gray-700 @else hover:bg-gray-700 @endif text-gray-400 hover:text-white">
-                        <i class="fa-solid fa-house-laptop"></i></i> WFH
+                        <i class="fa-solid fa-house-laptop"></i> WFH
                     </a>
                 </div>
             </li>

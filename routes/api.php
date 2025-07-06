@@ -47,7 +47,7 @@ Route::post('/insert-uid', function (Request $request) {
         $idPegawai = $pegawai->id_pegawai; // Ambil id_pegawai dari tabel pegawai
         $namaPegawai = $pegawai->nama_pegawai; // Ambil nama pegawai
 
-        // Cek apakah pegawai sudah absen hari ini
+        // Cari record absen hari ini berdasarkan id_pegawai
         $today = now()->toDateString();
         $absen = DB::table('data_absen')
             ->where('id_pegawai', $idPegawai)
@@ -56,27 +56,36 @@ Route::post('/insert-uid', function (Request $request) {
 
         if ($absen) {
             // Jika sudah absen masuk, cek apakah jam pulang sudah diisi
-            if (!$absen->jam_pulang) {
-                // Update jam pulang
-                DB::table('data_absen')
-                    ->where('id_absen', $absen->id_absen)
-                    ->update([
-                        'jam_pulang' => now(),
-                        'updated_at' => now(),
-                    ]);
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Jam pulang berhasil disimpan',
-                    'nama_pegawai' => $namaPegawai,
-                ], 200);
-            } else {
+            if ($absen->jam_pulang) {
                 return response()->json([
                     'status' => 'info',
-                    'message' => 'Anda sudah absen masuk dan pulang hari ini'
+                    'message' => 'Anda sudah absen masuk dan pulang hari ini.',
                 ], 200);
             }
+
+            // Jika belum absen pulang, cek apakah catatan sudah diisi
+            if (empty($absen->catatan)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Catatan harian belum diisi. Silakan isi catatan terlebih dahulu.',
+                ], 400);
+            }
+
+            // Update jam pulang jika catatan sudah diisi
+            DB::table('data_absen')
+                ->where('id_absen', $absen->id_absen)
+                ->update([
+                    'jam_pulang' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jam pulang berhasil disimpan.',
+                'nama_pegawai' => $namaPegawai,
+            ], 200);
         } else {
-            // Jika belum absen, simpan data absen baru
+            // Jika belum absen hari ini, simpan data absen baru (tap masuk)
             $idAbsen = DB::table('data_absen')->insertGetId([
                 'id_pegawai' => $idPegawai,
                 'jam_masuk' => now(),
@@ -84,12 +93,9 @@ Route::post('/insert-uid', function (Request $request) {
                 'updated_at' => now(),
             ]);
 
-            // Simpan ID absen ke session (atau cache/database sementara)
-            session(['id_absen' => $idAbsen]);
-
             return response()->json([
                 'status' => 'success',
-                'message' => 'Jam masuk berhasil disimpan',
+                'message' => 'Jam masuk berhasil disimpan.',
                 'nama_pegawai' => $namaPegawai,
             ], 200);
         }
@@ -98,4 +104,3 @@ Route::post('/insert-uid', function (Request $request) {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 });
-

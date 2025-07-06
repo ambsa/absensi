@@ -52,7 +52,7 @@ class ProviderView extends ServiceProvider
             'admin.cuti.update_status' => 'Ubah Status Cuti',
             'admin.cuti.destroy' => 'Hapus Pengajuan Cuti',
             'admin.wfh.index' => 'Work From Home',
-            'admin.wfh.create' => 'Ajukan Cuti',
+            'admin.wfh.create' => 'Tambah WFH',
             'user.index' => 'Dashboard ',
             'user.cuti.index' => 'Riwayat Cuti Saya',
             'user.cuti.create' => 'Ajukan Cuti Baru',

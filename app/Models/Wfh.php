@@ -21,4 +21,10 @@ class Wfh extends Model
     {
         return $this->belongsTo(Pegawai::class, 'id_pegawai', 'id_pegawai');
     }
+
+    public function datasen()
+    {
+        return $this->hasOne(Datasen::class, 'id_pegawai', 'id_pegawai')
+            ->whereDate('created_at', now()->toDateString());
+    }
 }

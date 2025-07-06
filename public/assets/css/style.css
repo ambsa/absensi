@@ -1,0 +1,13 @@
+/* Class untuk dropdown content */
+#absenDropdownContent {
+    max-height: 0; /* Default height = 0 */
+    opacity: 0; /* Default opacity = 0 */
+    overflow: hidden; /* Sembunyikan konten yang melebihi max-height */
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; /* Animasi smooth */
+}
+
+/* Ketika dropdown dibuka */
+#absenDropdownContent.open {
+    max-height: 200px; /* Sesuaikan dengan tinggi maksimal dropdown */
+    opacity: 1; /* Tampilkan konten */
+}

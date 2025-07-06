@@ -3,7 +3,7 @@
 @section('title', 'Edit User')
 
 @section('content')
-    
+
 
     <div class="max-w-4xl mx-auto mt-10 bg-gray-800 p-6 rounded-lg shadow-lg">
 
@@ -86,33 +86,7 @@
             }
         });
     </script>
-    <!-- SweetAlert2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Periksa apakah ada pesan sukses di session flash
-            @if(session('success'))
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: "{{ session('success') }}",
-                    showConfirmButton: false,
-                    timer: 3000 // Pesan akan hilang setelah 3 detik
-                });
-            @endif
-    
-            // Periksa apakah ada pesan error di session flash
-            @if(session('error'))
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal!',
-                    text: "{{ session('error') }}",
-                    showConfirmButton: false,
-                    timer: 3000 // Pesan akan hilang setelah 3 detik
-                });
-            @endif
-        });
-    </script>
+
 
 
 

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\WFH;
+use App\Models\Wfh;
 use Illuminate\Support\Facades\Auth;
 
 class UserWfhController extends Controller
@@ -12,7 +12,7 @@ class UserWfhController extends Controller
     public function index(Request $request){
 
         // Query hanya untuk pegawai yang sedang login
-        $query = WFH::where('id_pegawai', Auth::user()->id_pegawai);
+        $query = Wfh::where('id_pegawai', Auth::user()->id_pegawai);
 
         // Filter berdasarkan status jika parameter 'status' ada
         if ($request->has('status') && !empty($request->status)) {
@@ -37,7 +37,7 @@ class UserWfhController extends Controller
         ]);
 
         // Buat pengajuan WFH dengan id_pegawai dari user yang sedang login
-        WFH::create([
+        Wfh::create([
             'id_pegawai' => Auth::user()->id_pegawai,
             'tanggal' => $request->tanggal,
             'status' => 'pending',
@@ -50,7 +50,7 @@ class UserWfhController extends Controller
     public function show($id)
     {
         // Temukan pengajuan WFH berdasarkan ID dan pastikan milik user yang sedang login
-        $wfh = WFH::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
+        $wfh = Wfh::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
 
         // Kembalikan view dengan data pengajuan WFH
         return view('user.wfh.show', compact('wfh'));
@@ -59,7 +59,7 @@ class UserWfhController extends Controller
     public function edit($id)
     {
         // Temukan pengajuan WFH berdasarkan ID dan pastikan milik user yang sedang login
-        $wfh = WFH::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
+        $wfh = Wfh::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
 
         // Pastikan status pengajuan masih pending agar bisa diedit
         if ($wfh->status !== 'pending') {
@@ -78,7 +78,7 @@ class UserWfhController extends Controller
         ]);
 
         // Temukan pengajuan WFH berdasarkan ID dan pastikan milik user yang sedang login
-        $wfh = WFH::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
+        $wfh = Wfh::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
 
         // Pastikan status pengajuan masih pending agar bisa diperbarui
         if ($wfh->status !== 'pending') {
@@ -97,7 +97,7 @@ class UserWfhController extends Controller
     public function destroy($id)
     {
         // Temukan pengajuan WFH berdasarkan ID dan pastikan milik user yang sedang login
-        $wfh = WFH::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
+        $wfh = Wfh::where('id_pegawai', Auth::user()->id_pegawai)->findOrFail($id);
 
         // Pastikan status pengajuan masih pending agar bisa dihapus
         if ($wfh->status !== 'pending') {

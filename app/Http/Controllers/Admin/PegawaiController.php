@@ -9,6 +9,8 @@ use App\Models\Departemen;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
 
@@ -39,26 +41,33 @@ class PegawaiController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all()); // Debugging: Cek semua data yang dikirimkan
-
+        // Validasi input menggunakan Rule::unique dengan pengecualian untuk nilai '-'
         $request->validate([
             'nama_pegawai' => 'required|string|max:255',
             'email' => 'required|email|unique:pegawai,email',
             'password' => 'required|string|min:4',
             'id_role' => 'required|exists:role,id_role', // Pastikan role dipilih
             'id_departemen' => 'required|exists:departemen,id_departemen', // Pastikan departemen dipilih
-            'uuid' => 'required|string|unique:pegawai,uuid',
+            'uuid' => [
+                'required',
+                'string',
+                Rule::unique('pegawai', 'uuid')->where(function ($query) {
+                    return $query->where('uuid', '<>', '-'); // Pengecualian untuk nilai '-'
+                }),
+            ],
         ]);
 
+        // Menyimpan data pegawai baru ke database
         Pegawai::create([
             'nama_pegawai' => $request->nama_pegawai,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'id_role' => $request->id_role,
             'id_departemen' => $request->id_departemen,
-            'uuid' => $request->uuid,
+            'uuid' => $request->uuid, // Nilai default '-' akan disimpan jika tidak diubah
         ]);
 
+        // Redirect ke halaman index dengan pesan sukses
         return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan!');
     }
 
@@ -78,20 +87,29 @@ class PegawaiController extends Controller
         // Validasi input
         $request->validate([
             'nama_pegawai' => 'required|string|max:255',
-            'email' => 'required|email|unique:pegawai,email',
+            'email' => ['required','email',Rule::unique('pegawai')->ignore($pegawai->id_pegawai, 'id_pegawai'),],
             'id_role' => 'required|exists:role,id_role', // Pastikan role dipilih
             'id_departemen' => 'required|exists:departemen,id_departemen', // Pastikan departemen dipilih
-            'uuid' => 'required|string|unique:pegawai,uuid',
+            'uuid' => ['required','string',Rule::unique('pegawai', 'uuid')->where(function ($query) {
+                    return $query->where('uuid', '<>', '-'); // Pengecualian untuk nilai '-'
+                })->ignore($pegawai->id_pegawai, 'id_pegawai'), // Pengecualian untuk nilai lama
+            ],
         ]);
 
         // Update data pegawai
-        $pegawai->update([
+        $updated = $pegawai->update([
             'nama_pegawai' => $request->nama_pegawai,
             'email' => $request->email,
             'id_role' => $request->id_role,
             'id_departemen' => $request->id_departemen,
             'uuid' => $request->uuid,
         ]);
+
+        if ($updated) {
+            Log::info('Pegawai berhasil diperbarui: ', $pegawai->toArray());
+        } else {
+            Log::error('Gagal memperbarui pegawai.');
+        }
 
         return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil diperbarui!');
     }

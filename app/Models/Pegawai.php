@@ -11,7 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Pegawai extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, HasFactory;
 
     protected $primaryKey = 'id_pegawai'; // Mengatur primary key menjadi id_pegawai
     protected $table = 'pegawai';        // Nama tabel
@@ -24,6 +24,7 @@ class Pegawai extends Authenticatable
         'id_role',         // Kolom role_id di tabel pegawai
         'id_departemen',   // Kolom departemen_id di tabel pegawai
         'uuid',
+        'device_token',
     ];
 
     // Kolom yang disembunyikan dari array/json
@@ -57,7 +58,7 @@ class Pegawai extends Authenticatable
     {
         return $this->hasMany(Cuti::class, 'id_pegawai');
     }
-    public function Wfh()
+    public function wfh()
     {
         return $this->hasMany(Wfh::class, 'id_pegawai', 'id_pegawai');
     }

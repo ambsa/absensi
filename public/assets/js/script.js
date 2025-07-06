@@ -1,3 +1,4 @@
+// LIHAT PASSWORD PADA HALAMAN LOGIN
 document.addEventListener("DOMContentLoaded", () => {
     // Fungsi untuk show password
     const togglePassword = document.getElementById("togglePassword");
@@ -19,62 +20,97 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    // ====================================================================
 
-    // UNTUK DROPDOWN PADA MENU PROFIL
+    // DROPDOWN MENU PROFILE
     $(document).ready(function () {
         // Ambil elemen-elemen yang diperlukan
-        const profileImage = $('#profileImage');
-        const profileDropdownMenu = $('#profileDropdownMenu');
-    
+        const profileImage = $("#profileImage");
+        const profileDropdownMenu = $("#profileDropdownMenu");
+
         if (profileImage.length && profileDropdownMenu.length) {
             // Toggle dropdown ketika gambar profil diklik
-            profileImage.on('click', function (e) {
+            profileImage.on("click", function (e) {
                 e.stopPropagation(); // Mencegah event bubbling ke document
-    
-                profileDropdownMenu.toggleClass('opacity-0 invisible scale-95');
+
+                profileDropdownMenu.toggleClass("opacity-0 invisible scale-95");
             });
-    
+
             // Sembunyikan dropdown jika pengguna mengklik di luar area dropdown
-            $(document).on('click', function (e) {
-                if (!profileImage.is(e.target) && !profileDropdownMenu.is(e.target) && profileDropdownMenu.has(e.target).length === 0) {
-                    profileDropdownMenu.addClass('opacity-0 invisible scale-95');
+            $(document).on("click", function (e) {
+                if (
+                    !profileImage.is(e.target) &&
+                    !profileDropdownMenu.is(e.target) &&
+                    profileDropdownMenu.has(e.target).length === 0
+                ) {
+                    profileDropdownMenu.addClass(
+                        "opacity-0 invisible scale-95"
+                    );
                 }
             });
-    
+
             // Mencegah dropdown tertutup saat mengklik di dalam dropdown
-            profileDropdownMenu.on('click', function (e) {
+            profileDropdownMenu.on("click", function (e) {
                 e.stopPropagation();
             });
         }
     });
 
-    // SweetAlert untuk konfirmasi logout
-    const logoutButton = document.getElementById("logoutButton");
-if (logoutButton) {
-    logoutButton.addEventListener("click", function (event) {
-        event.preventDefault();
+    const profileImage = document.getElementById('profileImageToggle');
+    const profileDropdown = document.getElementById('profileDropdownMenu');
 
-        Swal.fire({
-            title: "Are you sure?",
-            text: "You will be logged out of your account!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes, log out!",
-            cancelButtonText: "Cancel",
-            customClass: {
-                confirmButton: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-3", // Styling tombol konfirmasi
-                cancelButton: "bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded", // Styling tombol batal
-            },
-            buttonsStyling: false, // Nonaktifkan styling bawaan SweetAlert2
-            background: '#1E293B', // Latar belakang gelap
-            color: '#ffffff',     // Teks putih
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById("logoutForm").submit();
+    if (profileImage && profileDropdown) {
+        profileImage.addEventListener('click', function() {
+            profileDropdown.classList.toggle('invisible');
+            profileDropdown.classList.toggle('opacity-0');
+            profileDropdown.classList.toggle('scale-95');
+            profileDropdown.classList.toggle('scale-100');
+            profileDropdown.classList.toggle('transform');
+            profileDropdown.classList.toggle('translate-y-0');
+        });
+
+        document.addEventListener('click', function(e) {
+            const isProfileTrigger = e.target.id === 'profileImageToggle' ||
+                e.target.closest('#profileImageToggle');
+
+            if (!isProfileTrigger && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('invisible', 'opacity-0', 'scale-95');
+                profileDropdown.classList.remove('scale-100');
             }
         });
-    });
-}
+    }
+    // ====================================================================
+
+    // KONFIRMASI LOGOUT DENGAN SWEET ALERT
+    const logoutButton = document.getElementById("logoutButton");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You will be logged out of your account!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, log out!",
+                cancelButtonText: "Cancel",
+                customClass: {
+                    confirmButton:
+                        "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-3", // Styling tombol konfirmasi
+                    cancelButton:
+                        "bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded", // Styling tombol batal
+                },
+                buttonsStyling: false, // Nonaktifkan styling bawaan SweetAlert2
+                background: "#1E293B", // Latar belakang gelap
+                color: "#ffffff", // Teks putih
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById("logout-form").submit();
+                }
+            });
+        });
+    }
+    // ====================================================================
 
     // DROPDOWN PADA SUBMENU PENGAJUAN
     $(document).ready(function () {
@@ -115,4 +151,6 @@ if (logoutButton) {
             e.stopPropagation();
         });
     });
+    // ==================================================================== 
+    
 });

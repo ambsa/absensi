@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Cuti;
 use App\Models\Datasen;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\Departemen;
 use App\Models\RfidCard; // Import model RfidCard
@@ -24,10 +25,16 @@ class AdminController extends Controller
     $cutiApproved = Cuti::where('status', 'approved')->count();
     $cutiRejected = Cuti::where('status', 'rejected')->count();
 
-    // Statistik Ketepatan Waktu Pegawai (Data Harian)
+    // Ambil bulan dari request, default ke bulan saat ini
+    $bulan = $request->input('bulan') ?? now()->format('Y-m');
+    $selectedMonthStart = Carbon::parse($bulan)->startOfMonth();
+    $selectedMonthEnd = Carbon::parse($bulan)->endOfMonth();
+
+    // Statistik Ketepatan Waktu Pegawai (Data Harian) untuk bulan yang dipilih
     $absensi = Datasen::selectRaw('DATE(jam_masuk) as tanggal')
         ->selectRaw('SUM(CASE WHEN TIME(jam_masuk) <= "08:00:00" THEN 1 ELSE 0 END) as tepat_waktu')
         ->selectRaw('SUM(CASE WHEN TIME(jam_masuk) > "08:00:00" THEN 1 ELSE 0 END) as terlambat')
+        ->whereBetween('jam_masuk', [$selectedMonthStart, $selectedMonthEnd])
         ->groupBy('tanggal')
         ->get();
 
@@ -42,7 +49,7 @@ class AdminController extends Controller
         $dataTerlambat[] = (int) $item->terlambat;
     }
 
-     // Ubah query catatan agar paginate 3 data per halaman
+    // Query catatan dengan pagination
     $query = Datasen::with('pegawai')->select('id_absen', 'id_pegawai', 'catatan', 'file_catatan', 'jam_masuk');
 
     if ($request->has('search') && !empty($request->search)) {
@@ -55,59 +62,55 @@ class AdminController extends Controller
         $query->whereDate('jam_masuk', $request->tanggal);
     }
 
-    // Paginate dengan 3 data per halaman
+    // Paginate dengan 8 data per halaman
     $catatans = $query->paginate(8)->appends($request->all());
 
-    // Statistik Kehadiran & Catatan Harian untuk Karyawan Terbaik
-$bulanIni = now()->startOfMonth();
-$tanggalAkhir = now()->endOfMonth();
-
-$karyawanQuery = Datasen::with('pegawai')
-    ->select('id_pegawai', 
-        DB::raw('COUNT(*) as total_kehadiran'),
-        DB::raw('AVG(TIME_TO_SEC(TIME(jam_masuk))) as avg_time_sec'),
-        DB::raw('SUM(CASE WHEN catatan IS NOT NULL AND catatan != "" THEN 1 ELSE 0 END) as jumlah_catatan'))
-    ->whereBetween('jam_masuk', [$bulanIni, $tanggalAkhir])
-    ->groupBy('id_pegawai');
+    // Statistik Kehadiran & Catatan Harian untuk Karyawan Terbaik (berdasarkan bulan yang dipilih)
+    $karyawanQuery = Datasen::with('pegawai')
+        ->select('id_pegawai',
+            DB::raw('COUNT(*) as total_kehadiran'),
+            DB::raw('AVG(TIME_TO_SEC(TIME(jam_masuk))) as avg_time_sec'),
+            DB::raw('SUM(CASE WHEN catatan IS NOT NULL AND catatan != "" THEN 1 ELSE 0 END) as jumlah_catatan'))
+        ->whereBetween('jam_masuk', [$selectedMonthStart, $selectedMonthEnd])
+        ->groupBy('id_pegawai');
 
     $karyawanList = $karyawanQuery->get();
 
-// Jumlah hari kerja dalam sebulan (misal: 22 hari)
-$jumlahHariKerja = now()->daysInMonth;
+    // Jumlah hari kerja dalam sebulan
+    $jumlahHariKerja = $selectedMonthStart->daysInMonth;
 
-// Hitung skor akhir setiap pegawai
-$karyawanScores = collect();
+    // Hitung skor akhir setiap pegawai
+    $karyawanScores = collect();
 
-foreach ($karyawanList as $karyawan) {
-    $score = 0;
+    foreach ($karyawanList as $karyawan) {
+        $score = 0;
 
-    // Skor berdasarkan kehadiran (40%)
-    $score += ($karyawan->total_kehadiran / $jumlahHariKerja) * 40;
+        // Skor berdasarkan kehadiran (40%)
+        $score += ($karyawan->total_kehadiran / $jumlahHariKerja) * 40;
 
-    // Skor berdasarkan ketepatan waktu (40%) - semakin kecil nilai jam masuk, semakin baik
-    $maxScoreTime = 28800; // 08:00:00 = 8*3600 detik
-    $waktuScore = max(0, ($maxScoreTime - $karyawan->avg_time_sec)) / $maxScoreTime * 40;
-    $score += $waktuScore;
+        // Skor berdasarkan ketepatan waktu (40%) - semakin kecil nilai jam masuk, semakin baik
+        $maxScoreTime = 28800; // 08:00:00 = 8*3600 detik
+        $waktuScore = max(0, ($maxScoreTime - $karyawan->avg_time_sec)) / $maxScoreTime * 40;
+        $score += $waktuScore;
 
-    // Skor kelengkapan catatan (20%)
-    if ($karyawan->jumlah_catatan == $jumlahHariKerja) {
-        $score += 20;
-    } else {
-        $score += ($karyawan->jumlah_catatan / $jumlahHariKerja) * 20;
+        // Skor kelengkapan catatan (20%)
+        if ($karyawan->jumlah_catatan == $jumlahHariKerja) {
+            $score += 20;
+        } else {
+            $score += ($karyawan->jumlah_catatan / $jumlahHariKerja) * 20;
+        }
+
+        $karyawanScores->push([
+            'nama' => $karyawan->pegawai->nama_pegawai,
+            'kehadiran' => $karyawan->total_kehadiran,
+            'rataWaktuMasuk' => gmdate("H:i", $karyawan->avg_time_sec),
+            'catatanLengkap' => $karyawan->jumlah_catatan == $jumlahHariKerja ? 'Ya' : 'Tidak',
+            'score' => $score
+        ]);
     }
 
-    $karyawanScores->push([
-        'nama' => $karyawan->pegawai->nama_pegawai,
-        'kehadiran' => $karyawan->total_kehadiran,
-        'rataWaktuMasuk' => gmdate("H:i", $karyawan->avg_time_sec),
-        'catatanLengkap' => $karyawan->jumlah_catatan == $jumlahHariKerja ? 'Ya' : 'Tidak',
-        'score' => $score
-    ]);
-}
-
-// Urutkan berdasarkan skor tertinggi
-$karyawanTerbaik = $karyawanScores->sortByDesc('score')->first();
-
+    // Urutkan berdasarkan skor tertinggi
+    $karyawanTerbaik = $karyawanScores->sortByDesc('score')->first();
 
     return view('admin.index', compact(
         'totalCuti',
@@ -118,7 +121,8 @@ $karyawanTerbaik = $karyawanScores->sortByDesc('score')->first();
         'dataTepatWaktu',
         'dataTerlambat',
         'catatans',
-        'karyawanTerbaik'
+        'karyawanTerbaik',
+        'bulan' // Kirimkan bulan yang dipilih ke view
     ));
 }
 

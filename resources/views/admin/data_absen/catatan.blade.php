@@ -1,6 +1,6 @@
 <!-- catatan.blade.php -->
-
 @extends('layouts.main')
+
 @section('title', 'Catatan Harian')
 
 @section('content')
@@ -36,4 +36,48 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Cek jika ada pesan sukses
+        @if (session('success'))
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 2000, 
+                background: '#161A23',
+                color: '#ffffff',
+                toast: true,
+                width: '350px',
+                padding: '1.5rem',
+                customClass: {
+                    popup: 'swal2-noanimation swal2-padding',
+                    title: 'swal2-title-large',
+                },
+            });
+        @endif
+
+        // Cek jika ada pesan error
+        @if (session('error'))
+            Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: '{{ session('error') }}',
+                showConfirmButton: true,    
+                confirmButtonText: 'Tutup', 
+                confirmButtonColor: '#dc3545',
+                background: '#161A23',
+                color: '#ffffff',
+                width: '400px',
+                padding: '2rem',
+                customClass: {
+                    popup: 'swal2-noanimation swal2-padding', 
+                    title: 'swal2-title-large',
+                },
+            });
+        @endif
+    });
+</script>
 @endsection

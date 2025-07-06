@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Response;
 use App\Models\Attendance;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Datasen;
 use App\Models\Wfh;
 use App\Models\DataAbsen;
+use App\Exports\DataAbsenExport;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -23,13 +26,22 @@ class DatasenController extends Controller
     {
         $this->middleware('auth'); // Memastikan pengguna sudah login
     }
-    public function index()
+    public function index(Request $request)
     {
-        // Mengambil semua data absen beserta relasi pegawai
-        $datasens = Datasen::with('pegawai')->get();
+        // Default jumlah data per halaman
+        $perPage = $request->input('per_page', 10); // Default ke 10 jika tidak ada input
 
-        // Mengirim data absen ke view
-        return view('admin.data_absen.index', compact('datasens'));
+        // Validasi input per_page untuk mencegah nilai tidak valid
+        $allowedPerPageValues = [10, 25, 100, 500];
+        if (!in_array($perPage, $allowedPerPageValues)) {
+            $perPage = 10; // Reset ke default jika input tidak valid
+        }
+
+        // Mengambil data absen dengan pagination
+        $datasens = Datasen::with('pegawai')->paginate($perPage);
+
+        // Kirim data absen dan jumlah data per halaman ke view
+        return view('admin.data_absen.index', compact('datasens', 'perPage'));
     }
 
 
@@ -60,27 +72,37 @@ class DatasenController extends Controller
             return redirect()->back()->with('error', 'Catatan harian sudah diisi. Tidak dapat mengedit lagi.');
         }
 
-        // Simpan catatan
         $absen->catatan = $request->input('catatan');
 
         // Simpan file jika ada
         if ($request->hasFile('file_catatan')) {
             $file = $request->file('file_catatan');
             $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('uploads/catatan', $fileName, 'public');
-            $absen->file_catatan = $filePath;
-        }
 
-        // Simpan perubahan
+            // Path ke direktori uploads/catatan di public_html
+            $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads/catatan/';
+
+            // Pastikan direktori ada
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            // Pindahkan file ke direktori tujuan
+            $file->move($uploadPath, $fileName);
+
+            // Simpan nama file ke database
+            $absen->file_catatan = $fileName;
+        }
         $absen->save();
 
         return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
     }
 
-    public function catatan() {
+    public function catatan()
+    {
         return view('admin.data_absen.catatan');
     }
-    
+
     public function downloadCSV($id)
     {
         // Ambil data absen berdasarkan ID
@@ -159,16 +181,46 @@ class DatasenController extends Controller
         }
     }
 
+    public function downloadAllPDF()
+    {
+        // Ambil semua data absen
+        $datasens = Datasen::with('pegawai')->get();
+
+        // Format data untuk PDF
+        $data = [
+            'datasens' => $datasens->map(function ($item) {
+                return [
+                    'id_absen' => $item->id_absen,
+                    'nama_pegawai' => $item->pegawai->nama_pegawai ?? '-',
+                    'jam_masuk' => $item->jam_masuk,
+                    'jam_pulang' => $item->jam_pulang,
+                    'catatan' => $item->catatan,
+                    'tanggal' => Carbon::parse($item->created_at)->format('d-m-Y'),
+                ];
+            }),
+        ];
+
+        // Generate dan unduh PDF
+        $pdf = Pdf::loadView('admin.data_absen.all-pdf', $data);
+        return $pdf->download('all_data_absen.pdf');
+    }
+
+    public function downloadAllExcel()
+    {
+        return Excel::download(new DataAbsenExport(), 'Data_Absen.xlsx');
+    }
+
+    // BELUM
     public function wfhAbsen(Request $request)
     {
         // Validasi input
         $request->validate([
-            'wfh_id' => 'required|exists:wfhs,id_wfh',
+            'id_wfh' => 'required|exists:wfh,id_wfh',
             'type' => 'required|in:masuk,pulang',
         ]);
 
         // Ambil data WFH
-        $wfh = Wfh::findOrFail($request->wfh_id);
+        $wfh = Wfh::findOrFail($request->id_wfh);
 
         // Pastikan absen hanya bisa dilakukan pada tanggal yang sesuai
         if ($wfh->tanggal !== now()->toDateString()) {
@@ -178,20 +230,16 @@ class DatasenController extends Controller
         // Ambil ID pegawai dari user yang login
         $idPegawai = Auth::user()->id_pegawai;
 
-        // Cari record absen hari ini berdasarkan id_pegawai
-        $today = now()->toDateString();
-        $absen = Datasen::where('id_pegawai', $idPegawai)
-            ->whereDate('created_at', $today)
-            ->first();
+        // Cari atau buat record absen hari ini
+        $absen = Datasen::firstOrCreate(
+            ['id_pegawai' => $idPegawai, 'tanggal' => now()->toDateString()],
+            [
+                'id_pegawai' => $idPegawai,
+                'tanggal' => now()->toDateString(),
+            ]
+        );
 
-        // Jika belum ada record absen untuk hari ini, buat record baru
-        if (!$absen) {
-            $absen = new Datasen();
-            $absen->id_pegawai = $idPegawai;
-            $absen->created_at = now();
-            $absen->updated_at = now();
-        }
-
+        // Inisialisasi respons
         $response = ['status' => 'success', 'message' => 'Absen berhasil dilakukan.'];
         $statusCode = 200;
 
@@ -215,6 +263,7 @@ class DatasenController extends Controller
             }
         }
 
+        // Simpan perubahan jika status berhasil
         if ($statusCode === 200) {
             $absen->save();
         }

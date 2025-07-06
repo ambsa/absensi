@@ -5,13 +5,11 @@
 
 
 @section('content')
-    <div class="container mx-auto p-6 bg-[#161A23] border border-gray-700 shadow-lg rounded-lg text-white">
-        <!-- Judul Form -->
-        <h2 class="text-2xl font-bold mb-6 text-gray-200">Form Tambah Cuti</h2>
+    <div class="container mx-auto p-6 bg-[#161A23] border border-gray-700 shadow-lg rounded-lg text-white md:max-w-xl">
 
         <form action="{{ route('admin.cuti.store') }}" method="POST" class="space-y-4">
             @csrf
-        
+
             <!-- Jenis Cuti -->
             <div>
                 <label for="id_jenis_cuti" class="block text-sm font-medium text-gray-400">Jenis Cuti</label>
@@ -26,7 +24,7 @@
                     <p class="text-red-500 text-sm">{{ $message }}</p>
                 @enderror
             </div>
-        
+
             <!-- Tanggal Mulai -->
             <div>
                 <label for="tanggal_mulai" class="block text-sm font-medium text-gray-400">Tanggal Mulai</label>
@@ -36,7 +34,7 @@
                     <p class="text-red-500 text-sm">{{ $message }}</p>
                 @enderror
             </div>
-        
+
             <!-- Tanggal Selesai -->
             <div>
                 <label for="tanggal_selesai" class="block text-sm font-medium text-gray-400">Tanggal Selesai</label>
@@ -46,7 +44,7 @@
                     <p class="text-red-500 text-sm">{{ $message }}</p>
                 @enderror
             </div>
-        
+
             <!-- Alasan Cuti -->
             <div>
                 <label for="alasan" class="block text-sm font-medium text-gray-400">Alasan Cuti</label>
@@ -56,7 +54,7 @@
                     <p class="text-red-500 text-sm">{{ $message }}</p>
                 @enderror
             </div>
-        
+
             <!-- Submit Button -->
             <div class="flex justify-between">
                 <button type="submit"

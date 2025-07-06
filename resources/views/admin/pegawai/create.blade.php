@@ -73,7 +73,7 @@
                         <label for="uuid" class="block text-sm font-medium text-gray-300">Nomor Kartu RFID</label>
                         <input type="text" name="uuid" id="uuid"
                             class="mt-2 block w-full px-4 py-2 bg-gray-700 border border-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-white placeholder-gray-400"
-                            placeholder="Enter RFID Card Number" required>
+                            placeholder="Enter RFID Card Number" value="-" required>
                     </div>
 
                     <!-- Submit and Cancel Buttons -->

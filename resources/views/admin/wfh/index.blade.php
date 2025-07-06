@@ -5,12 +5,11 @@
 @section('content')
 
     <div class="container mx-auto p-6 bg-[#161A23]">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-col space-y-4 mb-6">
             <!-- Filter Status -->
-            <form action="{{ route('admin.wfh.index') }}" method="GET" class="flex items-center space-x-2">
-                <label for="status" class="font-semibold text-white">Filter Status:</label>
+            <div class="flex items-center space-x-4">
                 <select name="status" id="status"
-                    class="border border-gray-700 p-2 rounded-md text-gray-300 bg-gray-700 w-32">
+                    class="border border-gray-700 p-2 rounded-md text-sm text-gray-300 bg-gray-700 w-32">
                     <option value="" {{ request('status') === '' ? 'selected' : '' }}>Semua</option>
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
@@ -19,167 +18,175 @@
                 <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
                     <i class="fas fa-filter"></i> Filter
                 </button>
-            </form>
+            </div>
 
             <!-- Tombol Ajukan WFH -->
-            <div class="mb-4 flex justify-end">
+            <div class="flex justify-end">
                 <a href="{{ route('admin.wfh.create') }}"
-                    class="bg-indigo-800 text-white px-3 py-1 rounded hover:bg-blue-900 flex items-center">
-                    <i class="fa-solid fa-plus mr-2"></i>Ajukan WFH
+                    class="bg-indigo-800 text-white px-4 py-2 rounded hover:bg-blue-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Ajukan WFH</span>
                 </a>
             </div>
         </div>
 
         <!-- Tabel Pengajuan WFH -->
-        <div class="shadow-md">
-            <table class="w-full bg-[#1E293B] divide-y divide-gray-700 rounded-lg">
-                <thead class="bg-gray-800 sticky top-0 z-10">
-                    <tr>
-                        <th
-                            class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[50px]">
-                            No
-                        </th>
-                        <th
-                            class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
-                            ID
-                        </th>
-                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                            Nama Karyawan
-                        </th>
-                        <th
-                            class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[120px]">
-                            Tanggal
-                        </th>
-                        <th
-                            class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
-                            Status
-                        </th>
-                        <th
-                            class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
-                            Aksi
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-700">
-                    @foreach ($wfhs as $item)
-                        <tr class="hover:bg-gray-900">
-                            <td class="px-3 py-2 text-center whitespace-nowrap">
-                                {{ $loop->iteration + ($wfhs->currentPage() - 1) * $wfhs->perPage() }}
-                            </td>
-                            <td class="px-3 py-2 text-center whitespace-nowrap">
-                                {{ $item->id_wfh }}
-                            </td>
-                            <td class="px-3 py-2 text-center whitespace-nowrap">
-                                {{ $item->pegawai?->nama_pegawai ?? 'Pegawai Tidak Ditemukan' }}
-                            </td>
-                            <td class="px-3 py-2 text-center whitespace-nowrap">
-                                {{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y') }}
-                            </td>
-                            <td class="px-3 py-2 text-center whitespace-nowrap">
-                                @if ($item->status == 'pending')
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-white">Pending</span>
-                                @elseif ($item->status == 'approved')
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-500 text-white">Approved</span>
-                                @else
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500 text-white">Rejected</span>
-                                @endif
-                            </td>
-                            <td class="px-3 py-2 text-center whitespace-nowrap relative">
-                                <!-- Dropdown Aksi -->
-                                <button type="button" class="focus:outline-none"
-                                    onclick="toggleDropdown({{ $item->id_wfh }})">
-                                    <i class="fa-solid fa-ellipsis text-gray-400 hover:text-gray-200 text-lg"></i>
-                                </button>
-                                <div id="wfh-dropdown-{{ $item->id_wfh }}"
-                                    class="hidden absolute right-0 mt-2 w-48 border border-gray-700 bg-[#1E293B] divide-y divide-gray-700 rounded-lg shadow-lg z-50 transform scale-95 transition-all duration-300 ease-in-out">
-                                    <div class="py-1">
-                                        <!-- Approve -->
-                                        <form action="{{ route('admin.wfh.update', $item->id_wfh) }}" method="POST"
-                                            class="block">
-                                            @csrf
-                                            @method('PUT')
-                                            <button type="submit" name="status" value="approved"
-                                                class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-green-600 hover:text-white rounded-t-md"
-                                                {{ $item->status !== 'pending' || ($item->updated_at && now()->diffInHours($item->updated_at) >= 1) ? 'disabled' : '' }}>
-                                                <i class="fa-solid fa-check mr-2 text-green-400"></i> Approve
-                                            </button>
-                                        </form>
-                                        <!-- Reject -->
-                                        <form action="{{ route('admin.wfh.update', $item->id_wfh) }}" method="POST"
-                                            class="block">
-                                            @csrf
-                                            @method('PUT')
-                                            <button type="submit" name="status" value="rejected"
-                                                class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-red-600 hover:text-white"
-                                                {{ $item->status !== 'pending' || ($item->updated_at && now()->diffInHours($item->updated_at) >= 1) ? 'disabled' : '' }}>
-                                                <i class="fa-solid fa-ban mr-2 text-red-400"></i> Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <div class="py-1">
-                                        <!-- Hapus -->
-                                        <button type="button" onclick="confirmDelete('{{ $item->id_wfh }}')"
-                                            class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-red-700 hover:text-white rounded-b-md">
-                                            <i class="fa-solid fa-trash mr-2 text-red-400"></i> Hapus
-                                        </button>
-                                        <!-- Form Hapus (sembunyi) -->
-                                        <form id="delete-form-{{ $item->id_wfh }}"
-                                            action="{{ route('admin.wfh.destroy', $item->id_wfh) }}" method="POST"
-                                            style="display: none;">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-                                    </div>
-                                </div>
-                            </td>
+        <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-lg border border-gray-700 shadow-md">
+                <table class="min-w-full w-full bg-[#161A23] divide-y divide-gray-700">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th
+                                class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[50px]">
+                                No
+                            </th>
+                            <th
+                                class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
+                                ID
+                            </th>
+                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Nama Karyawan
+                            </th>
+                            <th
+                                class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[120px]">
+                                Tanggal
+                            </th>
+                            <th
+                                class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
+                                Status
+                            </th>
+                            <th
+                                class="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-[100px]">
+                                Aksi
+                            </th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        @foreach ($wfhs as $item)
+                            <tr class="hover:bg-gray-700 transition duration-200 ease-in-out">
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-sm text-gray-300">
+                                    {{ $loop->iteration + ($wfhs->currentPage() - 1) * $wfhs->perPage() }}
+                                </td>
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-sm text-gray-300">
+                                    {{ $item->id_wfh }}
+                                </td>
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-sm text-gray-300">
+                                    {{ $item->pegawai?->nama_pegawai ?? 'Pegawai Tidak Ditemukan' }}
+                                </td>
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-sm text-gray-300">
+                                    {{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y') }}
+                                </td>
+                                <td class="px-3 py-2 text-center whitespace-nowrap text-sm">
+                                    @if ($item->status == 'pending')
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-black">Pending</span>
+                                    @elseif ($item->status == 'approved')
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-500 text-white">Approved</span>
+                                    @else
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500 text-white">Rejected</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-2 text-center whitespace-nowrap relative text-sm">
+                                    <!-- Dropdown Aksi -->
+                                    <button type="button" class="focus:outline-none"
+                                        onclick="toggleDropdown({{ $item->id_wfh }})">
+                                        <i class="fa-solid fa-ellipsis text-gray-400 hover:text-gray-200 text-lg"></i>
+                                    </button>
+                                    <div id="wfh-dropdown-{{ $item->id_wfh }}"
+                                        class="hidden absolute right-0 mt-2 w-48 border border-gray-700 bg-[#1E293B] divide-y divide-gray-700 rounded-lg shadow-lg z-50 transform scale-95 transition-all duration-300 ease-in-out">
+                                        <div class="py-1">
+                                            <!-- Approve -->
+                                            <form action="{{ route('admin.wfh.update', $item->id_wfh) }}" method="POST"
+                                                class="block">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" name="status" value="approved"
+                                                    class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-green-600 hover:text-white rounded-t-md"
+                                                    {{ $item->status !== 'pending' || ($item->updated_at && now()->diffInHours($item->updated_at) >= 1) ? 'disabled' : '' }}>
+                                                    <i class="fa-solid fa-check mr-2 text-green-400"></i> Approve
+                                                </button>
+                                            </form>
+                                            <!-- Reject -->
+                                            <form action="{{ route('admin.wfh.update', $item->id_wfh) }}" method="POST"
+                                                class="block">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" name="status" value="rejected"
+                                                    class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-red-600 hover:text-white"
+                                                    {{ $item->status !== 'pending' || ($item->updated_at && now()->diffInHours($item->updated_at) >= 1) ? 'disabled' : '' }}>
+                                                    <i class="fa-solid fa-ban mr-2 text-red-400"></i> Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="py-1">
+                                            <!-- Hapus -->
+                                            <button type="button" onclick="confirmDelete('{{ $item->id_wfh }}')"
+                                                class="flex items-center w-full px-4 py-2 text-sm text-left text-gray-300 hover:bg-red-700 hover:text-white rounded-b-md">
+                                                <i class="fa-solid fa-trash mr-2 text-red-400"></i> Hapus
+                                            </button>
+                                            <!-- Form Hapus (sembunyi) -->
+                                            <form id="delete-form-{{ $item->id_wfh }}"
+                                                action="{{ route('admin.wfh.destroy', $item->id_wfh) }}" method="POST"
+                                                style="display: none;">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
 
+
         <!-- Pagination -->
-        <div class="mt-4">
+        <div class="mt-4 flex justify-center">
             {{ $wfhs->links('pagination::tailwind') }}
         </div>
 
-        <!-- Floating Button untuk Absen -->
-        @if ($wfhApprovedToday)
-            <button id="floatingButton" class="floating-button hidden" onclick="openModal()">
-                Absen {{ isMorning() ? 'Masuk' : 'Pulang' }}
-            </button>
+        <!-- Tombol Absen di Luar Tabel -->
+        <div class="mt-6">
+            @foreach ($wfhs as $item)
+                @if ($item->status == 'approved' && now()->toDateString() == \Carbon\Carbon::parse($item->tanggal)->toDateString())
+                    <div class="mb-4">
+                        <p class="text-gray-300 text-sm mb-2">
+                            Pegawai: {{ $item->pegawai?->nama_pegawai ?? 'Pegawai Tidak Ditemukan' }} -
+                            Tanggal: {{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y') }}
+                        </p>
 
-            <!-- Modal Absen -->
-            <div id="absenModal" class="modal fade" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Absen Kehadiran WFH/WFA</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Absen sebagai:</p>
-                            <form id="absenForm" action="{{ route('absen.wfh.store') }}" method="POST">
+                        <!-- Tombol Absen Masuk -->
+                        @if (!$item->absen_masuk)
+                            <form action="{{ route('admin.wfh.absen.masuk', $item->id_wfh) }}" method="POST"
+                                class="inline-block">
                                 @csrf
-                                <input type="hidden" name="wfh_id" value="{{ $wfhApprovedToday?->id ?? '' }}">
-                                <input type="hidden" name="type" id="absenType" value="">
-                                <button type="submit" class="btn btn-success w-full mb-2"
-                                    onclick="setAbsenType('masuk')" style="display: none;" id="btnMasuk">
-                                    Absen Masuk
-                                </button>
-                                <button type="submit" class="btn btn-danger w-full" onclick="setAbsenType('pulang')"
-                                    style="display: none;" id="btnPulang">
-                                    Absen Pulang
+                                <button type="submit"
+                                    class="ml-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600">
+                                    Hadir
                                 </button>
                             </form>
-                        </div>
+                        @endif
+
+                        <!-- Tombol Absen Pulang -->
+                        @if ($item->absen_masuk && !$item->absen_pulang)
+                            <form action="{{ route('admin.wfh.absen.pulang', $item->id_wfh) }}" method="POST"
+                                class="inline-block">
+                                @csrf
+                                <button type="submit"
+                                    class="ml-2 px-3 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600">
+                                    Pulang
+                                </button>
+                            </form>
+                        @endif
                     </div>
-                </div>
-            </div>
-        @endif
+                @endif
+            @endforeach
+        </div>
+
 
         @if (session('success'))
             <script>
@@ -279,93 +286,6 @@
         </script>
 
 
-        <script>
-            function isMorning() {
-                const now = new Date();
-                const hours = now.getHours();
-                return hours >= 7 && hours < 9; // Jam 07.00-09.00
-            }
-
-            function isEvening() {
-                const now = new Date();
-                const hours = now.getHours();
-                return hours >= 15 && hours < 17; // Jam 15.00-17.00
-            }
-
-            function toggleFloatingButton() {
-                const button = document.getElementById('floatingButton');
-                const btnMasuk = document.getElementById('btnMasuk');
-                const btnPulang = document.getElementById('btnPulang');
-
-                if (isMorning()) {
-                    button.textContent = 'Absen Masuk';
-                    button.classList.remove('hidden');
-                    btnMasuk.style.display = 'block';
-                    btnPulang.style.display = 'none';
-                } else if (isEvening()) {
-                    button.textContent = 'Absen Pulang';
-                    button.classList.remove('hidden');
-                    btnMasuk.style.display = 'none';
-                    btnPulang.style.display = 'block';
-                } else {
-                    button.classList.add('hidden');
-                    btnMasuk.style.display = 'none';
-                    btnPulang.style.display = 'none';
-                }
-            }
-
-            setInterval(toggleFloatingButton, 1000);
-            toggleFloatingButton();
-
-            function openModal() {
-                const modal = new bootstrap.Modal(document.getElementById('absenModal'));
-                modal.show();
-            }
-
-            function setAbsenType(type) {
-                document.getElementById('absenType').value = type;
-            }
-        </script>
-
-        <!-- SweetAlert CDN -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <!-- Bootstrap JS untuk Modal -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- CSS untuk Button Mengambang -->
-        <style>
-            .floating-button {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 150px;
-                height: 50px;
-                background-color: #3B82F6;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                z-index: 50;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: transform 0.2s ease-in-out;
-            }
-
-            .floating-button:hover {
-                transform: scale(1.1);
-            }
-
-            .floating-button.hidden {
-                display: none;
-            }
-
-            /* Gaya Modal */
-            .modal-content {
-                background-color: #1E293B !important;
-                color: white !important;
-            }
-        </style>
     @endsection
 
     @section('scripts')

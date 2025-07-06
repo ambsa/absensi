@@ -9,7 +9,8 @@ use App\Models\Datasen;
 
 class DatasenController extends Controller
 {
-    public function catatanuser(){
+    public function catatanuser()
+    {
         return view('user.catatan.catatanuser');
     }
     public function store(Request $request)
@@ -36,7 +37,8 @@ class DatasenController extends Controller
 
         // Cek apakah catatan sudah diisi
         if (!empty($absen->catatan)) {
-            return redirect()->back()->with('error', 'Catatan harian sudah diisi. Tidak dapat mengedit lagi.');
+            return redirect()->back()->with('error', 'Catatan harian sudah diisi. Tidak dapat mengedit lagi.')
+                ->with('catatanSudahDiisi', true);
         }
 
         // Simpan catatan
@@ -53,6 +55,6 @@ class DatasenController extends Controller
         // Simpan perubahan
         $absen->save();
 
-        return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
+        return redirect()->back()->with('success', 'Catatan berhasil disimpan.')->with('alertType', 'success');
     }
 }

@@ -12,7 +12,7 @@
 </div>    --}}
 
 
-   @include('dashboard_adm.pengajuancuti')
+    @include('dashboard_adm.pengajuancuti')
 
     <div class="container mx-auto mt-8 px-4">
         <!-- Grid Layout -->
@@ -23,13 +23,13 @@
 
             <!-- Bagian Tabel Catatan -->
             @include('dashboard_adm.tabelpegawai')
-           
+
         </div>
     </div>
 
 
 
-    
+
 
     <div class="container mx-auto mt-8 p-4">
         <!-- Grid Layout -->

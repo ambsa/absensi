@@ -1,5 +1,16 @@
 <div class="p-4 shadow-md relative h-64 md:h-96 flex flex-col justify-center">
-    <h2 class="text-md md:text-md font-normal text-gray-200 mb-4">Statistik Kehadiran</h2>
+    <!-- Judul Statistik -->
+    <h2 class="text-md md:text-lg font-normal text-gray-200 mb-4">Statistik Kehadiran</h2>
+    <!-- Form Pilih Bulan -->
+    <form action="{{ route('admin.index') }}" method="GET" class="flex items-center space-x-4 mb-6">
+        <input type="month" name="bulan" value="{{ $bulan ?? now()->format('Y-m') }}" id="bulan"
+            class="block w-full md:w-auto px-4 py-1 border border-gray-700 bg-gray-800 text-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+        <button type="submit"
+            class="px-4 py-1 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-md transition duration-300">
+            Tampilkan
+        </button>
+    </form>
+
 
     <!-- Canvas untuk Diagram Garis -->
     <div class="w-full h-full flex items-center border border-gray-700 rounded-lg justify-center">
