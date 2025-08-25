@@ -42,7 +42,13 @@ return [
         'driver' => 'session',
         'provider' => 'pegawais',
     ],
+    
     'admin' => [ // Guard baru untuk admin (pegawai dengan role 'admin')
+        'driver' => 'session',
+        'provider' => 'pegawais',
+    ],
+
+    'mini_admin' => [ 
         'driver' => 'session',
         'provider' => 'pegawais',
     ],

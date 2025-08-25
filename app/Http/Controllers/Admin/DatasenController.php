@@ -8,6 +8,8 @@ use App\Models\Attendance;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Datasen;
 use App\Models\Wfh;
+use Illuminate\Support\Facades\Str;
+use App\Models\UnknownUid;
 use App\Models\DataAbsen;
 use App\Exports\DataAbsenExport;
 
@@ -19,13 +21,14 @@ use Illuminate\Support\Facades\DB;
 use Exception;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use App\Models\Pegawai;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 
 class DatasenController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth'); // Memastikan pengguna sudah login
-    }
+    public function __construct() {}
     public function index(Request $request)
     {
         // Default jumlah data per halaman
@@ -38,7 +41,9 @@ class DatasenController extends Controller
         }
 
         // Mengambil data absen dengan pagination
-        $datasens = Datasen::with('pegawai')->paginate($perPage);
+         $datasens = Datasen::with('pegawai')
+        ->orderBy('created_at', 'desc') // Urutkan dari yang terbaru
+        ->paginate($perPage);
 
         // Kirim data absen dan jumlah data per halaman ke view
         return view('admin.data_absen.index', compact('datasens', 'perPage'));
@@ -49,9 +54,21 @@ class DatasenController extends Controller
     {
         // Validasi input
         $request->validate([
-            'catatan' => 'nullable|string|max:1000',
-            'file_catatan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            'uid' => 'nullable|string', // UID dari ESP8266
+            'catatan' => 'nullable|string|min:10|max:1000',
+            'file_catatan' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'wfh_id' => 'nullable|exists:wfh,id_wfh',
         ]);
+
+        // Jika ada wfh_id, ini adalah catatan WFH
+        if ($request->has('wfh_id')) {
+            return $this->storeWfhCatatan($request);
+        }
+
+        // Jika ada UID, ini adalah absensi dari ESP8266
+        if ($request->has('uid')) {
+            return $this->handleRfidAbsen($request);
+        }
 
         // Ambil id_pegawai dari pengguna yang sedang login
         $idPegawai = Auth::user()->id_pegawai;
@@ -62,40 +79,85 @@ class DatasenController extends Controller
             ->whereDate('created_at', $today)
             ->first();
 
-        // Jika tidak ada record absen untuk hari ini
         if (!$absen) {
             return redirect()->back()->with('error', 'Data absen tidak ditemukan.');
         }
 
-        // Cek apakah catatan sudah diisi
         if (!empty($absen->catatan)) {
             return redirect()->back()->with('error', 'Catatan harian sudah diisi. Tidak dapat mengedit lagi.');
         }
 
         $absen->catatan = $request->input('catatan');
 
-        // Simpan file jika ada
         if ($request->hasFile('file_catatan')) {
             $file = $request->file('file_catatan');
             $fileName = time() . '_' . $file->getClientOriginalName();
-
-            // Path ke direktori uploads/catatan di public_html
             $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads/catatan/';
-
-            // Pastikan direktori ada
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
-
-            // Pindahkan file ke direktori tujuan
             $file->move($uploadPath, $fileName);
-
-            // Simpan nama file ke database
             $absen->file_catatan = $fileName;
         }
+
         $absen->save();
 
         return redirect()->back()->with('success', 'Catatan berhasil disimpan.');
+    }
+
+    private function storeWfhCatatan(Request $request)
+    {
+        try {
+            // Cari data WFH
+            $wfh = Wfh::findOrFail($request->wfh_id);
+
+            // Validasi kepemilikan
+            if ($wfh->id_pegawai !== Auth::user()->id_pegawai) {
+                return redirect()->back()->with('error', 'Akses ditolak.');
+            }
+
+            // Cari data absen berdasarkan tanggal WFH
+            $absen = Datasen::where('id_pegawai', $wfh->id_pegawai)
+                ->whereDate('created_at', $wfh->tanggal)
+                ->first();
+
+            if (!$absen) {
+                return redirect()->back()->with('error', 'Data absen tidak ditemukan.');
+            }
+
+            // Cek apakah catatan sudah diisi
+            if (!empty($absen->catatan)) {
+                return redirect()->back()->with('error', 'Catatan harian sudah diisi. Tidak dapat mengedit lagi.');
+            }
+
+            $absen->catatan = $request->input('catatan');
+
+            // Simpan file jika ada
+            if ($request->hasFile('file_catatan')) {
+                $file = $request->file('file_catatan');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+
+                // Path ke direktori uploads/catatan di public_html
+                $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/uploads/catatan/';
+
+                // Pastikan direktori ada
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                // Pindahkan file ke direktori tujuan
+                $file->move($uploadPath, $fileName);
+
+                // Simpan nama file ke database
+                $absen->file_catatan = $fileName;
+            }
+            $absen->save();
+
+            // Redirect ke halaman WFH
+            return redirect()->route('admin.wfh.index')->with('success', 'Catatan WFH berhasil disimpan.');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     public function catatan()
@@ -271,93 +333,194 @@ class DatasenController extends Controller
         return response()->json($response, $statusCode);
     }
 
+    // UNTUK ANALISIS KECURANGAN ABSEN
+    public function handleRfidAbsen(Request $request)
+    {
+         // Validasi input UID sebagai integer
+    $validator = Validator::make($request->all(), [
+        'uid' => 'required|integer|min:1|max:4294967295',
+    ]);
 
+    if ($validator->fails()) {
+        return response()->json(['status' => 'error', 'message' => $validator->errors()], 400);
+    }
 
+    $uid = $request->input('uid'); // UID dari NodeMCU
+    Log::info('UID received:', ['uid' => $uid]);
 
-    // public function destroy($id_absen)
-    // {
-    //     try {
-    //         $datasen = Datasen::findOrFail($id_absen);
+    try {
+        // Cari data pegawai berdasarkan UUID
+        $pegawai = DB::table('pegawai')->where('uuid', $uid)->first();
 
-    //         // Hapus file jika ada
-    //         if ($datasen->file_catatan) {
-    //             Storage::disk('public')->delete($datasen->file_catatan);
-    //         }
+        if (!$pegawai) {
+            // Simpan UUID yang tidak terdaftar ke tabel unknown_uids
+            UnknownUid::firstOrCreate(['uuid' => $uid]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pengguna tidak ditemukan.',
+            ], 404);
+        }
 
-    //         // Hapus data dari database
-    //         $datasen->delete();
+        $idPegawai = $pegawai->id_pegawai; // Ambil id_pegawai dari tabel pegawai
+        $namaPegawai = $pegawai->nama_pegawai; // Ambil nama pegawai
 
-    //         return redirect()->route('admin.data_absen.index')->with('success', 'Data absensi berhasil dihapus!');
-    //     } catch (Exception $e) {
-    //         return redirect()->back()->withErrors(['error' => $e->getMessage()]);
-    //     }
-    // }
-    // Method untuk menampilkan halaman scan RFID
-    // public function showScanRfidPage()
-    // {
-    //     return view('tap_rfid.index'); // Sesuaikan dengan nama view yang sesuai
-    // }
-    // public function store(Request $request)
-    // {
-    //     // Validasi bahwa data RFID yang dikirim valid
-    //     $request->validate([
-    //         'rfid_card_number' => 'required|string',
-    //     ]);
+        // Logika absen masuk/pulang...
+        $today = now()->toDateString();
+        $absen = DB::table('data_absen')
+            ->where('id_pegawai', $idPegawai)
+            ->whereDate('created_at', $today)
+            ->first();
 
-    //     $response = ['message' => '', 'status' => 200];
+        if ($absen) {
+            // Jika sudah absen masuk, cek apakah jam pulang sudah diisi
+            if ($absen->jam_pulang) {
+                return response()->json([
+                    'status' => 'info',
+                    'message' => 'Anda sudah absen masuk dan pulang hari ini.',
+                ], 200);
+            }
 
-    //     // Mencari kartu RFID berdasarkan nomor yang dibaca
-    //     $rfidCard = RfidCard::where('card_number', $request->rfid_card_number)->first();
+            // Jika belum absen pulang, cek apakah catatan sudah diisi
+            if (empty($absen->catatan)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Catatan harian belum diisi. Silakan isi catatan terlebih dahulu.',
+                ], 400);
+            }
 
-    //     // Cek apakah kartu RFID terdaftar
-    //     if (!$rfidCard) {
-    //         $response['message'] = 'Kartu RFID tidak terdaftar!';
-    //         $response['status'] = 404;
-    //     } else {
-    //         $user = $rfidCard->user; // Ambil user yang terhubung dengan kartu RFID
+            // Update jam pulang jika catatan sudah diisi
+            DB::table('data_absen')
+                ->where('id_absen', $absen->id_absen)
+                ->update([
+                    'jam_pulang' => now(),
+                    'updated_at' => now(),
+                ]);
 
-    //         if (!$user) {
-    //             $response['message'] = 'Pengguna tidak ditemukan!';
-    //             $response['status'] = 404;
-    //         } else {
-    //             // Cek apakah user terjadwal untuk hari ini (work_schedule)
-    //             $workSchedule = WorkSchedule::where('user_id', $user->id)
-    //                 ->where('day', Carbon::today()->format('l')) // Menggunakan nama hari dari tanggal hari ini
-    //                 ->first();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jam pulang berhasil disimpan.',
+                'nama_pegawai' => $namaPegawai,
+            ], 200);
+        } else {
+            // Jika belum absen hari ini, simpan data absen baru (tap masuk)
+            $idAbsen = DB::table('data_absen')->insertGetId([
+                'id_pegawai' => $idPegawai,
+                'jam_masuk' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-    //             if (!$workSchedule) {
-    //                 $response['message'] = 'Pengguna tidak terjadwal bekerja hari ini!';
-    //                 $response['status'] = 404;
-    //             } else {
-    //                 // Cek apakah user sudah terdaftar absensi hari ini
-    //                 $attendance = Attendance::where('user_id', $user->id)
-    //                     ->whereDate('date', Carbon::today())
-    //                     ->first();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Jam masuk berhasil disimpan.',
+                'nama_pegawai' => $namaPegawai,
+            ], 200);
+        }
+    } catch (Exception $e) {
+        Log::error('Error saat memproses data absen:', ['error' => $e->getMessage()]);
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+}
 
-    //                 if (!$attendance) {
-    //                     // Jika absensi belum ada, tambahkan data check-in
-    //                     Attendance::create([
-    //                         'user_id' => $user->id,
-    //                         'rfid_card_id' => $rfidCard->id,
-    //                         'date' => Carbon::today(),
-    //                         'check_in' => Carbon::now(),
-    //                         'status' => 'checked_in',
-    //                     ]);
+    private function analyzeSuspiciousPatterns($idPegawai, $waktuAbsen)
+    {
+        // Ambil data absen beberapa hari terakhir untuk pegawai ini
+        $recentAbsens = DB::table('data_absen')
+            ->where('id_pegawai', $idPegawai)
+            ->where('created_at', '>=', now()->subDays(7)) // Ambil data 7 hari terakhir
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    //                     $response['message'] = 'Berhasil Absen Masuk!';
-    //                 } else {
-    //                     // Jika absensi sudah ada, tambahkan waktu check-out
-    //                     $attendance->update([
-    //                         'check_out' => Carbon::now(),
-    //                         'status' => 'checked_out',
-    //                     ]);
+        // Cek apakah ada pola jam masuk yang berulang
+        $suspiciousCount = 0;
+        foreach ($recentAbsens as $absen) {
+            if (abs(Carbon::parse($absen->jam_masuk)->diffInSeconds($waktuAbsen)) <= 5) {
+                $suspiciousCount++;
+            }
+        }
 
-    //                     $response['message'] = 'Berhasil Pulang!';
-    //                 }
-    //             }
-    //         }
-    //     }
+        if ($suspiciousCount > 3) { // Misalnya, jika lebih dari 3 kali absen dengan pola serupa
+            $this->logSuspiciousActivity($idPegawai, null, $waktuAbsen, "Jam masuk selalu sama dalam 7 hari terakhir.");
+        }
 
-    //     return response()->json(['message' => $response['message']], $response['status']);
-    // }
+        // Cek apakah ada pegawai lain yang absen pada waktu yang hampir bersamaan
+        $suspiciousRecords = DB::table('data_absen')
+            ->where('id_pegawai', '!=', $idPegawai)
+            ->whereBetween('created_at', [
+                Carbon::parse($waktuAbsen)->subSeconds(30),
+                Carbon::parse($waktuAbsen)->addSeconds(60),
+            ])
+            ->get();
+
+        if ($suspiciousRecords->isNotEmpty()) {
+            foreach ($suspiciousRecords as $record) {
+                $this->logSuspiciousActivity($idPegawai, $record->id_pegawai, $waktuAbsen, "Absen bersamaan dengan pegawai lain. Ada indikasi kecurangan dalam proses absensi.");
+            }
+        }
+    }
+
+    private function logSuspiciousActivity($idPegawai1, $idPegawai2, $waktuAbsen, $keterangan)
+    {
+        // Buat daftar pegawai yang terlibat dalam anomali
+        $pegawaiList = [];
+        if ($idPegawai1) {
+            $pegawaiList[] = [
+                'id_pegawai' => $idPegawai1,
+                'nama_pegawai' => $this->getNamaPegawai($idPegawai1),
+                'waktu' => Carbon::parse($waktuAbsen)->format('Y-m-d H:i:s'),
+            ];
+        }
+        if ($idPegawai2) {
+            $pegawaiList[] = [
+                'id_pegawai' => $idPegawai2,
+                'nama_pegawai' => $this->getNamaPegawai($idPegawai2),
+                'waktu' => Carbon::parse($waktuAbsen)->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        // Buat pesan notifikasi
+        $message = "Terdapat Anomali Dalam Proses Absensi:\n\n";
+
+        // Tambahkan detail pegawai
+        foreach ($pegawaiList as $index => $pegawai) {
+            $message .= ($index + 1) . ". Pegawai ID {$pegawai['id_pegawai']} ({$pegawai['nama_pegawai']}) = {$pegawai['waktu']}\n";
+        }
+
+        // Tambahkan keterangan
+        $message .= "\nKeterangan: $keterangan\n";
+
+        // Nomor penerima WhatsApp (ganti dengan nomor admin yang valid)
+        $to = "62882002451967";
+
+        // Kirim notifikasi via WhatsApp
+        $this->sendWhatsAppNotification($to, $message);
+    }
+
+    private function getNamaPegawai($idPegawai)
+    {
+        // Ambil nama pegawai dari database
+        $pegawai = DB::table('pegawai')->where('id_pegawai', $idPegawai)->first();
+        return $pegawai ? $pegawai->nama_pegawai : 'Nama Tidak Diketahui';
+    }
+
+    private function sendWhatsAppNotification($to, $message)
+    {
+        // URL WhatsApp API
+        $apiUrl = "http://localhost:3000/send/message";
+
+        try {
+            $response = Http::post($apiUrl, [
+                'phone' => $to,
+                'message' => $message,
+            ]);
+
+            if ($response->successful()) {
+                Log::info("Pesan WhatsApp berhasil dikirim ke $to.");
+            } else {
+                Log::error("Gagal mengirim pesan WhatsApp: " . $response->body());
+            }
+        } catch (Exception $e) {
+            Log::error("Error saat mengirim pesan WhatsApp: " . $e->getMessage());
+        }
+    }
 }

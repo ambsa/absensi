@@ -12,11 +12,21 @@ use App\Http\Controllers\Admin\DatasenController;
 use App\Http\Controllers\Admin\PegawaiController;
 use App\Http\Controllers\Admin\WfhController;
 use App\Http\Controllers\Admin\DeviceTokenController;
+use App\Http\Controllers\Admin\UnknownUidController;
+
 
 use App\Http\Controllers\User\UserCutiController;
 use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\User\DatasenController as UserDatasenController;
+use App\Http\Controllers\User\UserDatasenController;
 use App\Http\Controllers\User\UserWfhController;
+
+
+use App\Http\Controllers\Miniadmin\MiniAdminController;
+use App\Http\Controllers\Miniadmin\MiniadminCutiController;
+use App\Http\Controllers\Miniadmin\MiniadminWfhController;
+use App\Http\Controllers\Miniadmin\MiniadminDatasenController;
+
+
 use Illuminate\Foundation\Auth\User;
 
 /*
@@ -84,8 +94,16 @@ Route::middleware(['auth:admin', 'check.admin'])->group(function () {
     Route::delete('admin/wfh/{id}/destroy', [WfhController::class, 'destroy'])->name('admin.wfh.destroy'); // Menghapus pengajuan WFH
 
     Route::post('/store-device-token', [DeviceTokenController::class, 'store'])->middleware('auth:sanctum');
-    Route::post('/admin/wfh/{id}/absen-masuk', [WfhController::class, 'absenMasuk'])->name('admin.wfh.absen.masuk');
-    Route::post('/admin/wfh/{id}/absen-pulang', [WfhController::class, 'absenPulang'])->name('admin.wfh.absen.pulang');
+    Route::post('/admin/wfh/{id}/absen-masuk', [WfhController::class, 'absenMasuk'])
+        ->middleware('auth:admin')
+        ->name('admin.wfh.absen.masuk');
+
+    Route::post('/admin/wfh/{id}/absen-pulang', [WfhController::class, 'absenPulang'])
+        ->middleware('auth:admin')
+        ->name('admin.wfh.absen.pulang');
+
+    Route::get('/admin/unknown-uids', [UnknownUidController::class, 'index'])->name('admin.unknown_uids.index');
+    Route::delete('/admin/unknown-uids/{id}', [UnknownUidController::class, 'destroy'])->name('admin.unknown_uids.destroy');
 });
 
 // USER
@@ -111,7 +129,14 @@ Route::middleware(['auth', 'check.user'])->group(function () {
         Route::get('/{id}/edit', [UserWfhController::class, 'edit'])->name('edit'); // Form edit pengajuan WFH
         Route::put('/{id}/update', [UserWfhController::class, 'update'])->name('update'); // Perbarui pengajuan WFH
         Route::delete('/{id}/destroy', [UserWfhController::class, 'destroy'])->name('destroy'); // Hapus pengajuan WFH
+
+        // Route untuk absen WFH
+        Route::post('/{id}/absen-masuk', [UserWfhController::class, 'absenMasuk'])->name('absen.masuk');
+        Route::post('/{id}/absen-pulang', [UserWfhController::class, 'absenPulang'])->name('absen.pulang');
     });
+
+    // Data Absen User
+    Route::get('/user/data_absen', [UserDatasenController::class, 'index'])->name('user.data_absen.index');
 });
 
 // WFH
@@ -120,6 +145,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/absen-wfh', [DatasenController::class, 'wfhAbsen'])->name('absen.wfh.store');
 });
 
+
+Route::middleware(['auth:mini_admin'])->group(function () {
+    Route::get('/mini-admin', [MiniAdminController::class, 'index'])->name('miniadmin.index');
+    Route::get('/mini-admin/cuti', [MiniadminCutiController::class, 'index'])->name('miniadmin.cuti.index');
+    Route::get('/mini-admin/wfh', [MiniadminWfhController::class, 'index'])->name('miniadmin.wfh.index');
+
+
+    Route::get('/mini-admin/riwayatabsen', [MiniadminDatasenController::class, 'index'])->name('mini_admin.riwayatabsen.index');
+    // Tambahkan route lain untuk miniadmin di sini
+});
 // Route untuk halaman scan RFID bagi pengguna dengan role 'tap_rfid'
 // Route::middleware(['auth', 'role:tap_rfid'])->group(function () {
 //     // Route untuk halaman scan RFID bagi pengguna dengan role 'tap_rfid'

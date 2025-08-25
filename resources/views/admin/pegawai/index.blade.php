@@ -6,58 +6,58 @@
 
     <div class="mb-4 flex justify-end">
         <a href="{{ route('admin.pegawai.create') }}"
-            class="bg-indigo-800 text-white px-3 py-1 rounded hover:bg-blue-900 flex items-center">
+            class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-4 py-2 rounded flex items-center space-x-2 transition duration-200">
             <i class="fa-solid fa-plus mr-2"></i>Tambah Pegawai
         </a>
     </div>
 
     <div class="overflow-x-auto">
-        <div class="overflow-x-auto rounded-lg border border-gray-700 shadow-md">
-            <table class="min-w-full w-full bg-[#161A23] divide-y divide-gray-700">
-                <thead class="bg-gray-800">
+        <div class="overflow-x-auto rounded-lg border border-[var(--table-border)] shadow-md">
+            <table class="min-w-full w-full bg-[var(--table-bg)] divide-y divide-[var(--table-border)]">
+                <thead class="bg-[var(--table-header-bg)]">
                     <tr>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Nama Pegawai
                         </th>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Email
                         </th>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Role
                         </th>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Departemen
                         </th>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Kartu
                         </th>
-                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-left text-xs font-medium text-[var(--text-color)] uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700">
+                <tbody class="divide-y divide-[var(--table-border)]">
                     @foreach ($pegawais as $pegawai)
-                        <tr class="hover:bg-gray-700 transition duration-200 ease-in-out">
-                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                        <tr class="hover:bg-[var(--table-hover-bg)] transition duration-200 ease-in-out">
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-[var(--text-color)]">
                                 {{ $pegawai->nama_pegawai }}
                             </td>
-                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-[var(--text-color)]">
                                 {{ $pegawai->email }}
                             </td>
-                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-[var(--text-color)]">
                                 {{ $pegawai->role->name ?? '-' }}
                             </td>
-                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-[var(--text-color)]">
                                 {{ $pegawai->departemen->nama_departemen ?? '-' }}
                             </td>
-                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-[var(--text-color)]">
                                 {{ $pegawai->uuid ?? '-' }}
                             </td>
                             <td class="py-3 px-4 whitespace-nowrap text-sm">
                                 <!-- Edit Button with hover effect -->
                                 <a href="{{ route('admin.pegawai.edit', $pegawai) }}"
-                                    class="text-blue-400 hover:text-blue-300 transition duration-200 ease-in-out transform hover:scale-110">
+                                    class="text-[var(--icon-color)] hover:text-[var(--icon-hover-color)] transition duration-200 ease-in-out transform hover:scale-110">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
     
@@ -65,7 +65,7 @@
                                 <form action="{{ route('admin.pegawai.destroy', $pegawai) }}" method="POST" style="display: inline;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" class="delete-btn text-red-400 hover:text-red-300 ml-2 transition duration-200 ease-in-out transform hover:scale-110">
+                                    <button type="button" class="delete-btn text-[var(--button-danger)] hover:text-[var(--button-danger)]/80 ml-2 transition duration-200 ease-in-out transform hover:scale-110">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
@@ -95,8 +95,8 @@
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Ya, hapus!',
                 cancelButtonText: 'Batal',
-                background: '#161A23',
-                color:'#ffffff'
+                background: '#1f2937',
+                color: '#f9fafb'
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit(); // Kirim form setelah konfirmasi
@@ -104,9 +104,7 @@
             });
         });
     });
-    </script>
 
-<script>
     document.addEventListener('DOMContentLoaded', function () {
         // Cek jika ada pesan sukses
         @if (session('success'))
@@ -116,8 +114,8 @@
                 title: '{{ session('success') }}',
                 showConfirmButton: false,
                 timer: 2000, 
-                background: '#161A23',
-                color: '#ffffff',
+                background: '#1f2937',
+                color: '#f9fafb',
                 toast: true,
                 width: '350px',
                 padding: '1.5rem',
@@ -137,8 +135,8 @@
                 showConfirmButton: true,    
                 confirmButtonText: 'Tutup', 
                 confirmButtonColor: '#dc3545',
-                background: '#161A23',
-                color: '#ffffff',
+                background: '#1f2937',
+                color: '#f9fafb',
                 width: '400px',
                 padding: '2rem',
                 customClass: {
@@ -148,5 +146,5 @@
             });
         @endif
     });
-</script>
+    </script>
 @endsection

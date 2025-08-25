@@ -14,7 +14,7 @@
 
 </head>
 
-<body class="bg-gradient-to-r from-gray-800 via-gray-600 to-gray-800 min-h-screen flex items-center justify-center font-sans">
+<body class="bg-gradient-to-r from-gray-400 via-gray-600 to-gray-400 min-h-screen flex items-center justify-center font-sans">
 
     <div class="w-80 md:w-full max-w-md bg-white/20 backdrop-blur-lg border border-gray-300/30 shadow-xl rounded-xl p-8 text-white">
 

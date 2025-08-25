@@ -29,10 +29,10 @@ class CutiController extends Controller
 
     // Ambil data cuti dengan relasi pegawai dan jenis_cuti
     $cuti = Cuti::with(['pegawai', 'jenis_cuti'])
-        ->orderBy('created_at', 'asc')
+        ->orderBy('created_at', 'desc')
         ->paginate($perPage); // Paginate berdasarkan nilai per_page
 
-    return view('admin.cuti.index', compact('cuti', 'perPage'));
+    return view('miniadmin.cuti.index', compact('cuti', 'perPage'));
 }
     /**
      * Menampilkan form pengajuan cuti.

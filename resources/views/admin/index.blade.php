@@ -5,25 +5,37 @@
 @section('content')
 
 
+ <div class="container mx-auto mt-8">
+    <!-- Grid Layout Statistik -->
+    <div class="grid grid-cols-1 shadow rounded-lg md:grid-cols-2 gap-6">
+        <!-- Bagian Diagram -->
+        <div class="rounded-lg p-4 md:p-6">
+            @include('dashboard_adm.pengajuancuti')
+        </div>
+        <div class="rounded-lg p-4 md:p-6">
+            @include('dashboard_adm.wfhdash')
+        </div>
+    </div>
+</div>
 
-    {{-- <div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>    --}}
 
-
-    @include('dashboard_adm.pengajuancuti')
-
-    <div class="container mx-auto mt-8 px-4">
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+    <div class="container mx-auto mt-8">
+        <!-- Grid Layout Statistik -->
+        <div class="grid grid-cols-1 gap-6">
             <!-- Bagian Diagram -->
-            @include('dashboard_adm.statistik')
+            <div class="rounded-lg p-4">
+                @include('dashboard_adm.statistik')
+            </div>
+        </div>
 
-            <!-- Bagian Tabel Catatan -->
-            @include('dashboard_adm.tabelpegawai')
-
+        <!-- Grid Layout SOTM & Tabel Catatan -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div class="rounded-lg shadow p-4">
+                @include('dashboard_adm.sotm')
+            </div>
+            <div class="rounded-lg shadow p-4">
+                @include('dashboard_adm.tabelpegawai')
+            </div>
         </div>
     </div>
 
@@ -31,21 +43,9 @@
 
 
 
-    <div class="container mx-auto mt-8 p-4">
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-            @include('dashboard_adm.sotm')
 
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
-
-
-
-            <script src="https://cdn.jsdelivr.net/npm/sweetalert2 @11"></script>
-
-            <!-- Inisialisasi Flatpickr -->
-
-
-        @endsection
+@endsection

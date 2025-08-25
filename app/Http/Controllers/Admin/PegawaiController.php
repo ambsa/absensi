@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\Role;
 use App\Models\Departemen;
+use App\Models\UnknownUid;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
@@ -29,14 +30,15 @@ class PegawaiController extends Controller
         return view('admin.pegawai.index', compact('pegawais'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $roles = Role::all();
         $departemens = Departemen::all();
+        
+        // Ambil UUID dari parameter jika ada (dari unknown_uids)
+        $uuid = $request->get('uuid', '-');
 
-        // dd($roles, $departemens); // Debugging: Cek data roles dan departemen
-
-        return view('admin.pegawai.create', compact('roles', 'departemens'));
+        return view('admin.pegawai.create', compact('roles', 'departemens', 'uuid'));
     }
 
     public function store(Request $request)
@@ -58,7 +60,7 @@ class PegawaiController extends Controller
         ]);
 
         // Menyimpan data pegawai baru ke database
-        Pegawai::create([
+        $pegawai = Pegawai::create([
             'nama_pegawai' => $request->nama_pegawai,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -66,6 +68,11 @@ class PegawaiController extends Controller
             'id_departemen' => $request->id_departemen,
             'uuid' => $request->uuid, // Nilai default '-' akan disimpan jika tidak diubah
         ]);
+
+        // Jika UUID bukan '-', hapus dari tabel unknown_uids
+        if ($request->uuid !== '-') {
+            UnknownUid::where('uuid', $request->uuid)->delete();
+        }
 
         // Redirect ke halaman index dengan pesan sukses
         return redirect()->route('admin.pegawai.index')->with('success', 'Pegawai berhasil ditambahkan!');
@@ -104,6 +111,11 @@ class PegawaiController extends Controller
             'id_departemen' => $request->id_departemen,
             'uuid' => $request->uuid,
         ]);
+
+        // Jika UUID diubah dan bukan '-', hapus dari tabel unknown_uids
+        if ($updated && $request->uuid !== '-' && $request->uuid !== $pegawai->getOriginal('uuid')) {
+            UnknownUid::where('uuid', $request->uuid)->delete();
+        }
 
         if ($updated) {
             Log::info('Pegawai berhasil diperbarui: ', $pegawai->toArray());

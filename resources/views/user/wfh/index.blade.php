@@ -87,5 +87,246 @@
     <div class="mt-4">
         {{ $wfhs->appends(request()->except('page'))->links('pagination::tailwind') }}
     </div>
+
+    <!-- Tombol Absen di Luar Tabel -->
+    <div class="mt-6">
+        @php
+            $hasWfhToday = false;
+        @endphp
+        
+        @foreach ($wfhs as $item)
+            @if ($item->status == 'approved' && 
+                 now()->toDateString() == \Carbon\Carbon::parse($item->tanggal)->toDateString())
+                @php
+                    $hasWfhToday = true;
+                @endphp
+                <div class="mb-4 p-4" id="wfh-item-{{ $item->id_wfh }}">
+                    <p class="text-gray-300 text-sm mb-2">
+                        Tanggal: {{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y') }}
+                    </p>
+
+                    <!-- Tombol Absen Masuk (AJAX) -->
+                    @if (!$item->absen_harian || !$item->absen_harian->jam_masuk)
+                        <button type="button"
+                            id="btn-absen-masuk-{{ $item->id_wfh }}"
+                            class="ml-2 px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600"
+                            data-id="{{ $item->id_wfh }}">
+                            Hadir
+                        </button>
+                    @endif
+
+                    <!-- Tombol Absen Pulang (AJAX) -->
+                    @if ($item->absen_harian && $item->absen_harian->jam_masuk && !$item->absen_harian->jam_pulang)
+                        <button type="button"
+                            id="btn-absen-pulang-{{ $item->id_wfh }}"
+                            class="ml-2 px-3 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600"
+                            data-id="{{ $item->id_wfh }}">
+                            Pulang
+                        </button>
+                    @endif
+
+                    <!-- Tombol Catatan (muncul setelah absen masuk) -->
+                    @if ($item->absen_harian && $item->absen_harian->jam_masuk && !$item->absen_harian->jam_pulang)
+                        @if ($item->absen_harian->catatan)
+                            <span class="ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md">
+                                ✓ Catatan Terisi
+                            </span>
+                        @else
+                            <a href="{{ route('user.catatan.catatanuser') }}?wfh_id={{ $item->id_wfh }}"
+                                class="ml-2 px-3 py-1 bg-yellow-500 text-white text-xs rounded-md hover:bg-yellow-600 inline-block">
+                                ⚠ Catatan
+                            </a>
+                        @endif
+                    @endif
+
+                    <!-- Status Absen Selesai -->
+                    @if ($item->absen_harian && $item->absen_harian->jam_masuk && $item->absen_harian->jam_pulang)
+                        <span class="ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md">
+                            Absen Selesai
+                        </span>
+                    @endif
+                </div>
+            @endif
+        @endforeach
+
+        @if (!$hasWfhToday)
+            <div class="text-center py-4">
+                <p class="text-gray-400 text-sm">
+                    Tidak ada pengajuan WFH yang disetujui untuk hari ini.
+                </p>
+            </div>
+        @endif
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fungsi untuk bind ulang event pada tombol absen pulang setelah DOM diupdate
+            function bindAbsenPulangButton(wfhId) {
+                const pulangBtn = document.getElementById(`btn-absen-pulang-${wfhId}`);
+                if (pulangBtn) {
+                    pulangBtn.addEventListener('click', function() {
+                        // AJAX absen pulang
+                        fetch(`{{ route('user.wfh.absen.pulang', ':id') }}`.replace(':id', wfhId), {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: data.message,
+                                        background: '#161A23',
+                                        color: '#ffffff'
+                                    });
+                                    const wfhItem = document.getElementById(`wfh-item-${wfhId}`);
+                                    wfhItem.innerHTML = `
+                                        <p class="text-gray-300 text-sm mb-2">
+                                            Tanggal: ${data.tanggal}
+                                        </p>
+                                        <span class="ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded-md">
+                                            Absen Selesai
+                                        </span>
+                                    `;
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Gagal!',
+                                        text: data.message,
+                                        background: '#161A23',
+                                        color: '#ffffff'
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal!',
+                                    text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+                                    background: '#161A23',
+                                    color: '#ffffff'
+                                });
+                            });
+                    });
+                }
+            }
+
+            // Tangani tombol absen masuk (AJAX)
+            document.querySelectorAll('[id^="btn-absen-masuk-"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const wfhId = this.getAttribute('data-id');
+                    fetch(`{{ route('user.wfh.absen.masuk', ':id') }}`.replace(':id', wfhId), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: data.message,
+                                    background: '#161A23',
+                                    color: '#ffffff'
+                                });
+                                // Update tampilan: ganti tombol hadir menjadi tombol pulang dan catatan
+                                const wfhItem = document.getElementById(`wfh-item-${wfhId}`);
+                                wfhItem.innerHTML = `
+                                    <p class="text-gray-300 text-sm mb-2">
+                                        Tanggal: ${data.tanggal}
+                                    </p>
+                                    <button type="button"
+                                        id="btn-absen-pulang-${wfhId}"
+                                        class="ml-2 px-3 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600"
+                                        data-id="${wfhId}">
+                                        Pulang
+                                    </button>
+                                    <a href="{{ route('user.catatan.catatanuser') }}?wfh_id=${wfhId}"
+                                        class="ml-2 px-3 py-1 bg-yellow-500 text-white text-xs rounded-md hover:bg-yellow-600 inline-block">
+                                        ⚠ Catatan
+                                    </a>
+                                `;
+                                // Bind event ke tombol pulang yang baru
+                                bindAbsenPulangButton(wfhId);
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal!',
+                                    text: data.message,
+                                    background: '#161A23',
+                                    color: '#ffffff'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+                                background: '#161A23',
+                                color: '#ffffff'
+                            });
+                        });
+                });
+            });
+
+            // Tangani tombol absen pulang (AJAX)
+            document.querySelectorAll('[id^="btn-absen-pulang-"]').forEach(button => {
+                const wfhId = button.getAttribute('data-id');
+                bindAbsenPulangButton(wfhId);
+            });
+        });
+    </script>
+
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                position: 'center',
+                icon: 'success',
+                title: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 1500,
+                background: '#161A23',
+                color: '#ffffff',
+                toast: true,
+                width: '350px',
+                padding: '1.5rem',
+                customClass: {
+                    popup: 'swal2-noanimation swal2-padding',
+                    title: 'swal2-title-large',
+                },
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: '{{ session('error') }}',
+                showConfirmButton: true,    
+                confirmButtonText: 'Tutup', 
+                confirmButtonColor: '#dc3545',
+                background: '#161A23',
+                color: '#ffffff',
+                width: '400px',
+                padding: '2rem',
+                customClass: {
+                    popup: 'swal2-noanimation swal2-padding', 
+                    title: 'swal2-title-large',
+                },
+            });
+        </script>
+    @endif
 </div>
 @endsection

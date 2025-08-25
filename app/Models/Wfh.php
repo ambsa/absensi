@@ -9,6 +9,9 @@ class Wfh extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'id_pegawai' => 'integer',
+    ];
     protected $table = 'wfh';
     protected $primaryKey = 'id_wfh';
     protected $fillable = [

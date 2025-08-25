@@ -23,12 +23,18 @@ class WfhController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Urutkan berdasarkan waktu dibuat terbaru
+        $query->orderBy('created_at', 'desc');
+
         // Pagination
         $wfhs = $query->paginate(10);
 
-        // Ambil ID pegawai dari user yang login
-        $idPegawai = Auth::user()->pegawai?->id;
-
+        // Ambil data absen harian untuk setiap WFH
+        foreach ($wfhs as $wfh) {
+            $wfh->absen_harian = Datasen::where('id_pegawai', $wfh->id_pegawai)
+                ->whereDate('created_at', $wfh->tanggal)
+                ->first();
+        }
 
         return view('admin.wfh.index', compact('wfhs'));
     }
@@ -80,7 +86,7 @@ class WfhController extends Controller
     public function show($id)
     {
         $wfh = Wfh::findOrFail($id);
-        return view('admin.wfh.show', compact('wfhS'));
+        return view('admin.wfh.show', compact('wfh'));
     }
 
     /**
@@ -153,103 +159,141 @@ class WfhController extends Controller
     public function absenMasuk(Request $request, $id)
     {
         try {
+            // Cari data WFH berdasarkan ID
             $wfh = Wfh::findOrFail($id);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->back()->with('error', 'WFH dengan ID tersebut tidak ditemukan.');
-        }
+            Log::info('Data WFH Ditemukan:', $wfh->toArray());
 
-        // Validasi apakah pengajuan WFH milik user yang login
-        if (!Auth::user()->pegawai || $wfh->id_pegawai !== Auth::user()->pegawai->id) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk absen ini.');
-        }
+            // Validasi kepemilikan dan status WFH
+            if ($wfh->id_pegawai !== Auth::user()->id_pegawai) {
+                Log::error('Akses Absen Masuk Ditolak (ID Pegawai Tidak Sesuai):', [
+                    'id_pegawai_login' => Auth::user()->id_pegawai,
+                    'id_pegawai_wfh' => $wfh->id_pegawai,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
 
-        // Validasi apakah WFH sudah disetujui
-        if ($wfh->status !== 'approved') {
-            return redirect()->back()->with('error', 'WFH belum disetujui admin.');
-        }
+            if ($wfh->status !== 'approved') {
+                Log::error('Akses Absen Masuk Ditolak (Status WFH Belum Disetujui):', [
+                    'status' => $wfh->status,
+                ]);
+                return response()->json(['success' => false, 'message' => 'WFH belum disetujui admin.'], 403);
+            }
 
-        // Validasi apakah absen masuk sudah dilakukan
-        if ($wfh->absen_masuk) {
-            return redirect()->back()->with('error', 'Anda sudah melakukan absen masuk.');
-        }
+            // Validasi apakah absen masuk sudah dilakukan
+            if ($wfh->absen_masuk) {
+                Log::error('Absen Masuk Sudah Dilakukan:', [
+                    'absen_masuk' => $wfh->absen_masuk,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absen masuk.'], 400);
+            }
 
-        // Debugging: Log data absen masuk
-        Log::info('Data Absen Masuk:', [
-            'id_pegawai' => $wfh->id_pegawai,
-            'jam_masuk' => now(),
-        ]);
+            // Simpan data absen masuk
+            $absen = Datasen::firstOrNew([
+                'id_pegawai' => $wfh->id_pegawai,
+                'created_at' => now()->toDateString(),
+            ]);
+            Log::info('Data Absen Sebelum Disimpan:', $absen->toArray());
 
-        // Cari atau buat data absen untuk hari ini
-        $absen = $wfh->datasen()->firstOrNew([
-            'id_pegawai' => $wfh->id_pegawai,
-        ]);
-
-        // Isi kolom jam_masuk jika belum ada
-        if (!$absen->jam_masuk) {
             $absen->jam_masuk = now();
-            $absen->catatan = 'Absen Masuk WFH';
-            $absen->save();
+
+            try {
+                $absen->save();
+                Log::info('Data Absen Masuk Tersimpan:', $absen->toArray());
+            } catch (\Exception $e) {
+                Log::error('Error Saat Menyimpan Absen Masuk:', ['message' => $e->getMessage()]);
+                return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat menyimpan absen masuk.'], 500);
+            }
+
+            // Update kolom absen_masuk di tabel WFH
+            $wfh->update(['absen_masuk' => now()]);
+            Log::info('Kolom absen_masuk di tabel WFH berhasil diperbarui.');
+
+            // Kembalikan respons JSON
+            return response()->json([
+                'success' => true,
+                'message' => 'Absen masuk berhasil!',
+                'pegawai_nama' => $wfh->pegawai->nama_pegawai,
+                'tanggal' => \Carbon\Carbon::parse($wfh->tanggal)->format('d-m-Y'),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error Umum di Method absenMasuk:', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
-
-        // Update status absen masuk di tabel wfhs
-        $wfh->update([
-            'absen_masuk' => now(),
-        ]);
-
-        return redirect()->back()->with('success', 'Absen masuk berhasil!');
     }
 
     public function absenPulang(Request $request, $id)
     {
         try {
+            // Cari data WFH berdasarkan ID
             $wfh = Wfh::findOrFail($id);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->back()->with('error', 'WFH dengan ID tersebut tidak ditemukan.');
-        }
+            Log::info('Data WFH Ditemukan:', $wfh->toArray());
 
-        // Validasi apakah pengajuan WFH milik user yang login
-        if (!Auth::user()->pegawai || $wfh->id_pegawai !== Auth::user()->pegawai->id) {
-            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk absen ini.');
-        }
+            // Validasi kepemilikan dan status WFH
+            if ($wfh->id_pegawai !== Auth::user()->id_pegawai) {
+                Log::error('Akses Absen Pulang Ditolak (ID Pegawai Tidak Sesuai):', [
+                    'id_pegawai_login' => Auth::user()->id_pegawai,
+                    'id_pegawai_wfh' => $wfh->id_pegawai,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
 
-        // Validasi apakah WFH sudah disetujui
-        if ($wfh->status !== 'approved') {
-            return redirect()->back()->with('error', 'WFH belum disetujui admin.');
-        }
+            if ($wfh->status !== 'approved') {
+                Log::error('Akses Absen Pulang Ditolak (Status WFH Belum Disetujui):', [
+                    'status' => $wfh->status,
+                ]);
+                return response()->json(['success' => false, 'message' => 'WFH belum disetujui admin.'], 403);
+            }
 
-        // Validasi apakah absen masuk sudah dilakukan
-        if (!$wfh->absen_masuk) {
-            return redirect()->back()->with('error', 'Anda belum melakukan absen masuk.');
-        }
+            // Ambil data absen hari ini
+            $absen = Datasen::where('id_pegawai', $wfh->id_pegawai)
+                ->whereDate('created_at', now()->toDateString())
+                ->first();
 
-        // Validasi apakah absen pulang sudah dilakukan
-        if ($wfh->absen_pulang) {
-            return redirect()->back()->with('error', 'Anda sudah melakukan absen pulang.');
-        }
+            // Validasi apakah absen masuk sudah dilakukan
+            if (!$absen || !$absen->jam_masuk) {
+                Log::error('Absen Pulang Ditolak (Belum Absen Masuk):', [
+                    'absen' => $absen,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Anda belum melakukan absen masuk.'], 400);
+            }
 
-        // Debugging: Log data absen pulang
-        Log::info('Data Absen Pulang:', [
-            'id_pegawai' => $wfh->id_pegawai,
-            'jam_pulang' => now(),
-        ]);
+            // Validasi apakah absen pulang sudah dilakukan
+            if ($absen->jam_pulang) {
+                Log::error('Absen Pulang Sudah Dilakukan:', [
+                    'jam_pulang' => $absen->jam_pulang,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Anda sudah melakukan absen pulang.'], 400);
+            }
 
-        // Cari data absen untuk hari ini
-        $absen = $wfh->datasen()->firstOrNew([
-            'id_pegawai' => $wfh->id_pegawai,
-        ]);
+            // Validasi apakah catatan sudah diisi
+            if (!$absen->catatan || empty(trim($absen->catatan))) {
+                Log::error('Absen Pulang Ditolak (Belum Mengisi Catatan):', [
+                    'catatan' => $absen->catatan,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Anda harus mengisi catatan harian terlebih dahulu sebelum absen pulang.'], 400);
+            }
 
-        // Isi kolom jam_pulang jika belum ada
-        if (!$absen->jam_pulang) {
+            // Simpan data absen pulang
             $absen->jam_pulang = now();
-            $absen->catatan = $absen->catatan ? $absen->catatan . ', Absen Pulang WFH' : 'Absen Pulang WFH';
-            $absen->save();
+
+            try {
+                $absen->save();
+                Log::info('Data Absen Pulang Tersimpan:', $absen->toArray());
+            } catch (\Exception $e) {
+                Log::error('Error Saat Menyimpan Absen Pulang:', ['message' => $e->getMessage()]);
+                return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat menyimpan absen pulang.'], 500);
+            }
+
+            // Kembalikan respons JSON
+            return response()->json([
+                'success' => true,
+                'message' => 'Absen pulang berhasil!',
+                'pegawai_nama' => $wfh->pegawai->nama_pegawai,
+                'tanggal' => \Carbon\Carbon::parse($wfh->tanggal)->format('d-m-Y'),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error Umum di Method absenPulang:', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
-
-        // Update status absen pulang di tabel wfhs
-        $wfh->update([
-            'absen_pulang' => now(),
-        ]);
-
-        return redirect()->back()->with('success', 'Absen pulang berhasil!');
     }
 }
